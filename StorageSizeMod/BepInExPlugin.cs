@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace StorageSizeMod
 {
-    [BepInPlugin("aedenthorn.StorageSizeMod", "Storage Size Mod", "0.1.0")]
+    [BepInPlugin("aedenthorn.StorageSizeMod", "Storage Size Mod", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -21,6 +21,7 @@ namespace StorageSizeMod
         public static ConfigEntry<float> range;
         private static Dictionary<string, XY> containerTypes = new Dictionary<string, XY>();
         private static string fileName = "container_types.json";
+        private static bool skip;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -43,6 +44,8 @@ namespace StorageSizeMod
 
         private static Dictionary<string, XY> GetContainerTypes()
         {
+            if (!modEnabled.Value)
+                return new Dictionary<string, XY>();
             string path = Path.Combine(AedenthornUtils.GetAssetPath(context, true), fileName);
             if (!File.Exists(path))
             {
@@ -53,6 +56,9 @@ namespace StorageSizeMod
         
         private static void AddContainerType(string name, int x, int y)
         {
+            if (!modEnabled.Value)
+                return;
+
             string path = Path.Combine(AedenthornUtils.GetAssetPath(context, true), fileName);
 
             var dict = new Dictionary<string, XY>();
@@ -86,6 +92,8 @@ namespace StorageSizeMod
         {
             static void Postfix(SeamothStorageContainer __instance, ItemsContainer value)
             {
+                if (!modEnabled.Value)
+                    return;
                 var name = GetStorageName(__instance.storageRoot);
                 containerTypes = GetContainerTypes();
                 if (containerTypes.TryGetValue(name, out var xy) && xy.custom)
@@ -107,6 +115,9 @@ namespace StorageSizeMod
         {
             static void Postfix(StorageContainer __instance, ItemsContainer value)
             {
+                if (!modEnabled.Value)
+                    return;
+
                 var name = GetStorageName(__instance.storageRoot);
                 containerTypes = GetContainerTypes();
                 if (containerTypes.TryGetValue(name, out var xy) && xy.custom)
@@ -126,6 +137,9 @@ namespace StorageSizeMod
         {
             static void Prefix(StorageContainer __instance, ref int width, ref int height)
             {
+                if (!modEnabled.Value || skip)
+                    return;
+
                 var name = GetStorageName(__instance.storageRoot);
                 containerTypes = GetContainerTypes();
                 if (containerTypes.TryGetValue(name, out var xy) && xy.custom)
@@ -133,6 +147,27 @@ namespace StorageSizeMod
                     width = xy.width;
                     height = xy.height;
                 }
+            }
+        }
+        [HarmonyPatch(typeof(Exosuit), "UpdateStorageSize")]
+        private static class Exosuit_UpdateStorageSize_Patch
+        {
+            static bool Prefix(Exosuit __instance)
+            {
+                if (!modEnabled.Value)
+                    return true;
+
+                var name = GetStorageName(__instance.storageContainer.storageRoot);
+                containerTypes = GetContainerTypes();
+                if (containerTypes.TryGetValue(name, out var xy) && xy.custom)
+                {
+                    int upgrades = __instance.modules.GetCount(TechType.VehicleStorageModule);
+                    skip = true;
+                    __instance.storageContainer.Resize(xy.width, xy.height + upgrades);
+                    skip = false;
+                    return false;
+                }
+                return true;
             }
         }
     }
