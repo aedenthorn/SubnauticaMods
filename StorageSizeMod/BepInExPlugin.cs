@@ -88,7 +88,7 @@ namespace StorageSizeMod
             {
                 var name = GetStorageName(__instance.storageRoot);
                 containerTypes = GetContainerTypes();
-                if (containerTypes.TryGetValue(name, out var xy))
+                if (containerTypes.TryGetValue(name, out var xy) && xy.custom)
                 {
                     Dbgl($"setting size for {name} ({xy.width}x{xy.height})");
                     __instance.container.Resize(xy.width, xy.height);
@@ -109,7 +109,7 @@ namespace StorageSizeMod
             {
                 var name = GetStorageName(__instance.storageRoot);
                 containerTypes = GetContainerTypes();
-                if (containerTypes.TryGetValue(name, out var xy))
+                if (containerTypes.TryGetValue(name, out var xy) && xy.custom)
                 {
                     Dbgl($"setting size for {name} ({xy.width}x{xy.height})");
                     __instance.container.Resize(xy.width, xy.height);
@@ -118,6 +118,20 @@ namespace StorageSizeMod
                 {
                     AddContainerType(GetStorageName(__instance.storageRoot), value.sizeX, value.sizeY);
 
+                }
+            }
+        }
+        [HarmonyPatch(typeof(StorageContainer), nameof(StorageContainer.Resize))]
+        private static class StorageContainer_Resize_Patch
+        {
+            static void Prefix(StorageContainer __instance, ref int width, ref int height)
+            {
+                var name = GetStorageName(__instance.storageRoot);
+                containerTypes = GetContainerTypes();
+                if (containerTypes.TryGetValue(name, out var xy) && xy.custom)
+                {
+                    width = xy.width;
+                    height = xy.height;
                 }
             }
         }
