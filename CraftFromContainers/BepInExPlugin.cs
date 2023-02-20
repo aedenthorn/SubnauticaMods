@@ -5,6 +5,7 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
@@ -13,7 +14,7 @@ using Component = UnityEngine.Component;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.1.0")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -22,6 +23,8 @@ namespace CraftFromContainers
         public static ConfigEntry<bool> isDebug;
         public static ConfigEntry<float> range;
         private static Dictionary<Transform, ItemsContainer> cachedContainers = new Dictionary<Transform, ItemsContainer>();
+
+        private static float timeElapsed;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -40,6 +43,17 @@ namespace CraftFromContainers
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
 
+        }
+        private void Update()
+        {
+            if(!modEnabled.Value || Inventory.main is null || uGUI.main?.pinnedRecipes is null)
+                return;
+            timeElapsed += Time.deltaTime;
+            if(timeElapsed > 1)
+            {
+                timeElapsed = 0;
+                AccessTools.FieldRefAccess<uGUI_PinnedRecipes, bool>(uGUI.main.pinnedRecipes, "ingredientsDirty") = true;
+            }
         }
         [HarmonyPatch(typeof(SeamothStorageContainer), nameof(SeamothStorageContainer.container))]
         [HarmonyPatch(MethodType.Setter)]
@@ -88,6 +102,53 @@ namespace CraftFromContainers
                     }
                 }
             }
+        }
+        
+        [HarmonyPatch(typeof(uGUI_RecipeEntry), nameof(uGUI_RecipeEntry.UpdateIngredients))]
+        private static class uGUI_RecipeEntry_UpdateIngredients_Patch
+        {
+            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                Dbgl("transpiling uGUI_RecipeEntry.UpdateIngredients");
+
+                var codes = new List<CodeInstruction>(instructions);
+                for (int i = 0; i < codes.Count; i++)
+                {
+                    if (codes[i].opcode == OpCodes.Callvirt && codes[i].operand is MethodInfo && (MethodInfo)codes[i].operand == AccessTools.Method(typeof(ItemsContainer), nameof(ItemsContainer.GetCount)))
+                    {
+                        Dbgl("Found method");
+                        codes[i].opcode = OpCodes.Call;
+                        codes[i].operand = AccessTools.Method(typeof(BepInExPlugin), nameof(BepInExPlugin.GetCount));
+                        break;
+                    }
+                }
+
+                return codes.AsEnumerable();
+            }
+        }
+
+        public static int GetCount(ItemsContainer container, TechType techType)
+        {
+
+            int total = container.GetCount(techType);
+            if (!modEnabled.Value)
+                return total;
+
+            foreach (var key in cachedContainers.Keys.ToArray())
+            {
+                try
+                {
+                    if (Vector3.Distance(Player.main.transform.position, key.position) <= range.Value)
+                    {
+                        total += cachedContainers[key].GetCount(techType);
+                    }
+                }
+                catch
+                {
+                    cachedContainers.Remove(key);
+                }
+            }
+            return total;
         }
 
         [HarmonyPatch(typeof(Inventory), nameof(Inventory.DestroyItem))]
