@@ -3,11 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CraftFromContainers", "CraftFromContainers\CraftFromContainers.csproj", "{CD733F8F-A7D5-4F62-B380-F51EF3A2AB9C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CraftFromContainers", "CraftFromContainers\CraftFromContainers.csproj", "{CD733F8F-A7D5-4F62-B380-F51EF3A2AB9C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageSizeMod", "StorageSizeMod\StorageSizeMod.csproj", "{755DC1AD-BDD0-49FF-BDBB-CA228A737F28}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AedenthornUtils", "AedenthornUtils\AedenthornUtils.csproj", "{18A3B92E-0F87-4AD7-9754-F256B6691282}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SeamothTopographicMap", "SeamothTopographicMap\SeamothTopographicMap.csproj", "{82F28C90-7F4C-4524-A48A-E09806D83ED4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrawnTopographicMap", "PrawnTopographicMap\PrawnTopographicMap.csproj", "{CE9D14F7-5413-4E52-A6EC-5DE878EAD61F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +31,14 @@ Global
 		{18A3B92E-0F87-4AD7-9754-F256B6691282}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18A3B92E-0F87-4AD7-9754-F256B6691282}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18A3B92E-0F87-4AD7-9754-F256B6691282}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82F28C90-7F4C-4524-A48A-E09806D83ED4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82F28C90-7F4C-4524-A48A-E09806D83ED4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82F28C90-7F4C-4524-A48A-E09806D83ED4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82F28C90-7F4C-4524-A48A-E09806D83ED4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE9D14F7-5413-4E52-A6EC-5DE878EAD61F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE9D14F7-5413-4E52-A6EC-5DE878EAD61F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE9D14F7-5413-4E52-A6EC-5DE878EAD61F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE9D14F7-5413-4E52-A6EC-5DE878EAD61F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
