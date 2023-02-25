@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrawnTopographicMap", "Praw
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CyclopsTopographicMap", "CyclopsTopographicMap\CyclopsTopographicMap.csproj", "{65CE21D1-27FF-4630-989B-45EF4ED9B601}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InventorySize", "InventorySize\InventorySize.csproj", "{D54DDE20-E9DC-452A-8B91-069805D9F1CD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{65CE21D1-27FF-4630-989B-45EF4ED9B601}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65CE21D1-27FF-4630-989B-45EF4ED9B601}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65CE21D1-27FF-4630-989B-45EF4ED9B601}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D54DDE20-E9DC-452A-8B91-069805D9F1CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D54DDE20-E9DC-452A-8B91-069805D9F1CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D54DDE20-E9DC-452A-8B91-069805D9F1CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D54DDE20-E9DC-452A-8B91-069805D9F1CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
