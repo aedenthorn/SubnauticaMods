@@ -72,6 +72,11 @@
       <HintPath>$(ManagedDataPath)\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="SML">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(GamePath)\BepInEx\plugins\Modding Helper\SMLHelper.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
 
   <!-- Add Unity references -->

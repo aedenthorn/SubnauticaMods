@@ -59,7 +59,7 @@ namespace CraftFromContainers
             {
                 if (!modEnabled.Value)
                     return;
-                cachedContainers.Add(__instance.transform, value);
+                cachedContainers[__instance.transform] = value;
             }
         }
 
@@ -71,7 +71,7 @@ namespace CraftFromContainers
             {
                 if (!modEnabled.Value)
                     return;
-                cachedContainers.Add(__instance.transform, value);
+                cachedContainers[__instance.transform] = value;
             }
         }
         

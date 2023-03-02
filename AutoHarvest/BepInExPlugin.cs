@@ -13,7 +13,7 @@ using UWE;
 
 namespace AutoHarvest
 {
-    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.1.0")]
+    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.2.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -22,6 +22,7 @@ namespace AutoHarvest
         public static ConfigEntry<bool> isDebug;
 
         public static ConfigEntry<bool> breakBreakables;
+        public static ConfigEntry<bool> autoPickupBreakables;
         public static ConfigEntry<bool> pickupables;
         public static ConfigEntry<bool> allowPickupCreature;
         public static ConfigEntry<bool> allowPickupEdible;
@@ -52,6 +53,7 @@ namespace AutoHarvest
             toggleKey = Config.Bind<KeyCode>("General", "ToggleKey", KeyCode.End, "Key to press to toggle mod.");
             preventPickingUpDropped = Config.Bind<bool>("Options", "PreventPickingUpDropped", true, "Prevent auto pickup of dropped items");
             breakBreakables = Config.Bind<bool>("Options", "BreakBreakables", true, "Break breakables");
+            autoPickupBreakables = Config.Bind<bool>("Options", "AutoPickupBreakables", true, "Auto-pickup breakables (will override any modded breakable drops)");
             pickupables = Config.Bind<bool>("Options", "Pickupables", true, "Pickup pickupables");
             allowPickupCreature = Config.Bind<bool>("Options", "AllowPickupCreature", true, "Allow pickup creature pickupables (i.e. fish) - respects forbid list");
             allowPickupEdible = Config.Bind<bool>("Options", "AllowPickupEdible", true, "Allow pickup edibles (i.e. fish and plants) - respects forbid list");
@@ -63,12 +65,19 @@ namespace AutoHarvest
 
             modEnabled.SettingChanged += ModEnabled_SettingChanged;
 
+            interval.SettingChanged += Interval_SettingChanged;
             
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
             InvokeRepeating("CheckAutoHarvest", 0, interval.Value);
 
             ReloadTypes();
+        }
+
+        private void Interval_SettingChanged(object sender, EventArgs e)
+        {
+            CancelInvoke("CheckAutoHarvest");
+            InvokeRepeating("CheckAutoHarvest", 0, interval.Value);
         }
 
         private void Update()
@@ -136,7 +145,12 @@ namespace AutoHarvest
                     if (r && IsAllowed(r.gameObject))
                     {
                         Dbgl($"Breaking {r.name} ({c.gameObject.layer})");
-                        BreakIntoResources(r);
+                        r.BreakIntoResources();
+                        if (autoPickupBreakables.Value)
+                        {
+                            CancelInvoke("CheckAutoHarvest");
+                            InvokeRepeating("CheckAutoHarvest", 0.1f, interval.Value);
+                        }
                         continue;
                     }
                 }
