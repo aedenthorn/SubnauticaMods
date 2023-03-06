@@ -2,7 +2,10 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -10,7 +13,7 @@ using UnityEngine;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.2.0")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -18,9 +21,14 @@ namespace CraftFromContainers
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
         public static ConfigEntry<float> range;
-        private static Dictionary<Transform, ItemsContainer> cachedContainers = new Dictionary<Transform, ItemsContainer>();
 
         private static float timeElapsed;
+
+        private static Dictionary<Transform, ItemsContainer> cachedContainers = new Dictionary<Transform, ItemsContainer>();
+
+        private static Dictionary<string, bool> containerTypes;
+        private static string containerFile = "allowed_container_types.json";
+        private static string containerPath;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -35,7 +43,9 @@ namespace CraftFromContainers
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
             range = Config.Bind<float>("Options", "Range", 100f, "Range (m)");
 
-            
+            containerPath = Path.Combine(AedenthornUtils.GetAssetPath(this, true), containerFile);
+            containerTypes = File.Exists(containerPath) ? JsonConvert.DeserializeObject<Dictionary<string, bool>>(containerPath) : new Dictionary<string, bool>();
+
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
 
@@ -51,30 +61,32 @@ namespace CraftFromContainers
                 AccessTools.FieldRefAccess<uGUI_PinnedRecipes, bool>(uGUI.main.pinnedRecipes, "ingredientsDirty") = true;
             }
         }
-        [HarmonyPatch(typeof(SeamothStorageContainer), nameof(SeamothStorageContainer.container))]
-        [HarmonyPatch(MethodType.Setter)]
-        private static class SeamothStorageContainer_container_Patch
+
+        [HarmonyPatch(typeof(SeamothStorageContainer), "Awake")]
+        private static class SeamothStorageContainer_Awake_Patch
         {
-            static void Postfix(SeamothStorageContainer __instance, ItemsContainer value)
+            static void Postfix(SeamothStorageContainer __instance)
             {
                 if (!modEnabled.Value)
                     return;
-                cachedContainers[__instance.transform] = value;
+                CheckStorageType(__instance);
+                cachedContainers[__instance.transform] = __instance.container;
+            }
+
+        }
+
+        [HarmonyPatch(typeof(StorageContainer), "Awake")]
+        private static class StorageContainer_Awake_Patch
+        {
+            static void Postfix(StorageContainer __instance)
+            {
+                if (!modEnabled.Value)
+                    return;
+                CheckStorageType(__instance);
+                cachedContainers[__instance.transform] = __instance.container;
             }
         }
 
-        [HarmonyPatch(typeof(StorageContainer), nameof(StorageContainer.container))]
-        [HarmonyPatch(MethodType.Setter)]
-        private static class StorageContainer_container_Patch
-        {
-            static void Postfix(StorageContainer __instance, ItemsContainer value)
-            {
-                if (!modEnabled.Value)
-                    return;
-                cachedContainers[__instance.transform] = value;
-            }
-        }
-        
         [HarmonyPatch(typeof(Inventory), nameof(Inventory.GetPickupCount))]
         private static class Inventory_GetPickupCount_Patch
         {
@@ -87,7 +99,7 @@ namespace CraftFromContainers
                 {
                     try
                     {
-                        if (Vector3.Distance(Player.main.transform.position, key.position) <= range.Value)
+                        if (CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.position) <= range.Value)
                         {
                             __result += cachedContainers[key].GetCount(pickupType);
                         }
@@ -134,7 +146,7 @@ namespace CraftFromContainers
             {
                 try
                 {
-                    if (Vector3.Distance(Player.main.transform.position, key.position) <= range.Value)
+                    if (CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.position) <= range.Value)
                     {
                         total += cachedContainers[key].GetCount(techType);
                     }
@@ -158,7 +170,7 @@ namespace CraftFromContainers
                 {
                     try
                     {
-                        if (Vector3.Distance(Player.main.transform.position, key.position) <= range.Value)
+                        if (CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.position) <= range.Value)
                         {
                             if (cachedContainers[key].DestroyItem(destroyTechType))
                             {
@@ -173,6 +185,27 @@ namespace CraftFromContainers
                     }
                 }
             }
+        }
+        private static string GetStorageName(Component c)
+        {
+            Transform t = c.transform;
+            while (t.parent != null && (t.name == "StorageRoot" || t.name == "StorageContainer" || t.name == "storage"))
+            {
+                t = t.parent;
+            }
+            var name = (t is null ? c.transform : t).name.Replace("(Clone)", "").Replace("StorageRoot", "");
+            return name;
+        }
+        private static bool CheckStorageType(Component c)
+        {
+            string name = GetStorageName(c);
+            if (!containerTypes.TryGetValue(name, out bool allowed))
+            {
+                containerTypes[name] = true;
+                File.WriteAllText(containerPath, JsonConvert.SerializeObject(containerTypes, Formatting.Indented));
+                return true;
+            }
+            else return allowed;
         }
     }
 }
