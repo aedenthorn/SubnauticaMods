@@ -2,11 +2,8 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -15,13 +12,14 @@ using UnityEngine.UI;
 
 namespace InventorySize
 {
-    [BepInPlugin("aedenthorn.InventorySize", "Inventory Size", "0.2.0")]
+    [BepInPlugin("aedenthorn.InventorySize", "Inventory Size", "0.2.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
+        public static ConfigEntry<bool> addScrollview;
         public static ConfigEntry<int> inventoryWidth;
         public static ConfigEntry<int> inventoryHeight;
         public static ConfigEntry<float> overflowOffset;
@@ -41,9 +39,10 @@ namespace InventorySize
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
-            overflowOffset = Config.Bind<float>("Options", "OverflowOffset", 20f, "Overflow offset to show part of the offscreen inventory grid in UI");
+            addScrollview = Config.Bind<bool>("Options", "AddScrollview", true, "Enable adding Scroll View for large storage sizes");
             inventoryWidth = Config.Bind<int>("Options", "InventoryWidth", 6, "Inventory width");
             inventoryHeight = Config.Bind<int>("Options", "InventoryHeight", 8, "Inventory width");
+            overflowOffset = Config.Bind<float>("Options", "OverflowOffset", 20f, "Overflow offset to show part of the offscreen inventory grid in UI");
 
             inventoryWidth.SettingChanged += SettingChanged;
             inventoryHeight.SettingChanged += SettingChanged;
@@ -107,7 +106,7 @@ namespace InventorySize
 
             public static void Postfix(uGUI_ItemsContainer __instance, ItemsContainer ___container)
             {
-                if (!modEnabled.Value || __instance != __instance.inventory.inventory)
+                if (!modEnabled.Value || __instance != __instance.inventory.inventory || !addScrollview.Value)
                     return;
                 RectTransform rtg = __instance.rectTransform;
                 var cellSize = 71;
@@ -115,7 +114,10 @@ namespace InventorySize
                 var containerSize = new Vector2(columns * cellSize + overflowOffset.Value, 10 * cellSize + overflowOffset.Value);
                 var gridSize = new Vector2(___container.sizeX * cellSize, ___container.sizeY * cellSize);
 
-                if ((containerSize.x < gridSize.x || containerSize.y < gridSize.y) && __instance.transform.parent.name != "Mask")
+                if (containerSize.x >= gridSize.x && containerSize.y >= gridSize.y)
+                    return;
+
+                if (__instance.transform.parent.name != "Mask")
                 {
                     Dbgl($"Adding scroll view");
 

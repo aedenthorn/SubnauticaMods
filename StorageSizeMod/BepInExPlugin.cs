@@ -12,13 +12,14 @@ using UnityEngine.UI;
 
 namespace StorageSizeMod
 {
-    [BepInPlugin("aedenthorn.StorageSizeMod", "Storage Size Mod", "0.3.0")]
+    [BepInPlugin("aedenthorn.StorageSizeMod", "Storage Size Mod", "0.3.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
+        public static ConfigEntry<bool> addScrollview;
         public static ConfigEntry<float> overflowOffset;
 
         private static Dictionary<string, XY> containerTypes = new Dictionary<string, XY>();
@@ -40,6 +41,7 @@ namespace StorageSizeMod
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
+            addScrollview = Config.Bind<bool>("Options", "AddScrollview", true, "Enable adding Scroll View for large storage sizes");
             overflowOffset = Config.Bind<float>("Options", "OverflowOffset", 20f, "Overflow offset to show part of the offscreen storage grid in UI");
             
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
@@ -182,7 +184,7 @@ namespace StorageSizeMod
         {
             public static void Postfix(uGUI_ItemsContainer __instance, ItemsContainer ___container)
             {
-                if (!modEnabled.Value || __instance != __instance.inventory.storage)
+                if (!modEnabled.Value || __instance != __instance.inventory.storage || !addScrollview.Value)
                     return;
                 RectTransform rtg = __instance.rectTransform;
                 var cellSize = 71;
@@ -190,7 +192,10 @@ namespace StorageSizeMod
                 var containerSize = new Vector2(columns * cellSize + overflowOffset.Value, 10 * cellSize + overflowOffset.Value);
                 var gridSize = new Vector2(___container.sizeX * cellSize, ___container.sizeY * cellSize);
 
-                if ((containerSize.x < gridSize.x || containerSize.y < gridSize.y) && __instance.transform.parent.name != "Mask")
+                if (containerSize.x >= gridSize.x && containerSize.y >= gridSize.y)
+                    return;
+
+                if (__instance.transform.parent.name != "Mask")
                 {
                     Dbgl($"Adding scroll view");
 
