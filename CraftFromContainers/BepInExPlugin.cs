@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.3.0")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.3.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -24,10 +24,10 @@ namespace CraftFromContainers
 
         private static float timeElapsed;
 
-        private static Dictionary<Transform, ItemsContainer> cachedContainers = new Dictionary<Transform, ItemsContainer>();
+        private static Dictionary<Component, ItemsContainer> cachedContainers = new Dictionary<Component, ItemsContainer>();
 
         private static Dictionary<string, bool> containerTypes;
-        private static string containerFile = "allowed_container_types.json";
+        private static string containerFile = "container_types_allowed.json";
         private static string containerPath;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
@@ -44,7 +44,7 @@ namespace CraftFromContainers
             range = Config.Bind<float>("Options", "Range", 100f, "Range (m)");
 
             containerPath = Path.Combine(AedenthornUtils.GetAssetPath(this, true), containerFile);
-            containerTypes = File.Exists(containerPath) ? JsonConvert.DeserializeObject<Dictionary<string, bool>>(containerPath) : new Dictionary<string, bool>();
+            containerTypes = File.Exists(containerPath) ? JsonConvert.DeserializeObject<Dictionary<string, bool>>(File.ReadAllText(containerPath)) : new Dictionary<string, bool>();
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
@@ -70,7 +70,7 @@ namespace CraftFromContainers
                 if (!modEnabled.Value)
                     return;
                 CheckStorageType(__instance);
-                cachedContainers[__instance.transform] = __instance.container;
+                cachedContainers[__instance.storageRoot] = __instance.container;
             }
 
         }
@@ -83,7 +83,7 @@ namespace CraftFromContainers
                 if (!modEnabled.Value)
                     return;
                 CheckStorageType(__instance);
-                cachedContainers[__instance.transform] = __instance.container;
+                cachedContainers[__instance.storageRoot] = __instance.container;
             }
         }
 
@@ -99,7 +99,7 @@ namespace CraftFromContainers
                 {
                     try
                     {
-                        if (CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.position) <= range.Value)
+                        if (CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.transform.position) <= range.Value)
                         {
                             __result += cachedContainers[key].GetCount(pickupType);
                         }
@@ -146,7 +146,7 @@ namespace CraftFromContainers
             {
                 try
                 {
-                    if (CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.position) <= range.Value)
+                    if (CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.transform.position) <= range.Value)
                     {
                         total += cachedContainers[key].GetCount(techType);
                     }
@@ -170,7 +170,7 @@ namespace CraftFromContainers
                 {
                     try
                     {
-                        if (CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.position) <= range.Value)
+                        if (CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.transform.position) <= range.Value)
                         {
                             if (cachedContainers[key].DestroyItem(destroyTechType))
                             {
