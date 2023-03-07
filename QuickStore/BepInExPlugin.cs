@@ -2,19 +2,16 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UWE;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "QuickStore", "0.1.0")]
+    [BepInPlugin("aedenthorn.QuickStore", "QuickStore", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -83,31 +80,22 @@ namespace QuickStore
         private static bool StoreItems(bool require)
         {
             int count = 0;
-            foreach(var item in Inventory.main.container.ToArray())
+            var array = ((Component[])FindObjectsOfType<StorageContainer>()).Concat(FindObjectsOfType<SeamothStorageContainer>());
+            for (int i = 0; i < array.Count(); i++)
             {
-                if (!IsAllowed(item.techType))
+                if (Vector3.Distance(Player.main.transform.position, array.ElementAt(i).transform.position) > range.Value)
                     continue;
-                //Dbgl($"Trying to store {item.techType.AsString(false)}");
-                var array = ((Component[])FindObjectsOfType<StorageContainer>()).Concat(FindObjectsOfType<SeamothStorageContainer>());
-                for (int i = 0; i < array.Count(); i++)
-                {
-                    ItemsContainer ic = (ItemsContainer)AccessTools.Property(array.ElementAt(i).GetType(), "container").GetValue(array.ElementAt(i));
-
-                    if (StoreInContainer(ic, item, require))
-                    {
-                        count++;
-                        Dbgl($"Stored {item.techType.AsString(false)}");
-                        break;
-                    }
-                }
+                ItemsContainer ic = (ItemsContainer)AccessTools.Property(array.ElementAt(i).GetType(), "container").GetValue(array.ElementAt(i));
+                count += TransferItems(Inventory.main.container, ic, require);
             }
+
             if(!string.IsNullOrEmpty(storedMessage.Value))
-            ErrorMessage.AddWarning(string.Format(storedMessage.Value, count));
+                ErrorMessage.AddWarning(string.Format(storedMessage.Value, count));
 
             return true;
         }
         
-        private static bool TransferItems(ItemsContainer source, ItemsContainer dest, bool require)
+        private static int TransferItems(ItemsContainer source, ItemsContainer dest, bool require)
         {
             int count = 0;
             foreach(var item in source.ToArray())
@@ -121,10 +109,7 @@ namespace QuickStore
                     Dbgl($"Stored {item.techType.AsString(false)}");
                 }
             }
-            //if(!string.IsNullOrEmpty(storedMessage.Value))
-            //ErrorMessage.AddWarning(string.Format(storedMessage.Value, count));
-
-            return true;
+            return count;
         }
 
         private static bool StoreInContainer(ItemsContainer dest, InventoryItem item, bool require)
