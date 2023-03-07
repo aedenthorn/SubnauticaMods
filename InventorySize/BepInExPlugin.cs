@@ -15,7 +15,7 @@ using UnityEngine.UI;
 
 namespace InventorySize
 {
-    [BepInPlugin("aedenthorn.InventorySize", "Inventory Size", "0.1.0")]
+    [BepInPlugin("aedenthorn.InventorySize", "Inventory Size", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -24,7 +24,7 @@ namespace InventorySize
         public static ConfigEntry<bool> isDebug;
         public static ConfigEntry<int> inventoryWidth;
         public static ConfigEntry<int> inventoryHeight;
-        private static bool skip;
+        public static ConfigEntry<float> overflowOffset;
 
         private static RectTransform rts;
         private static RectTransform rtm;
@@ -41,6 +41,7 @@ namespace InventorySize
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
+            overflowOffset = Config.Bind<float>("Options", "OverflowOffset", 20f, "Overflow offset to show part of the offscreen inventory grid in UI");
             inventoryWidth = Config.Bind<int>("Options", "InventoryWidth", 6, "Inventory width");
             inventoryHeight = Config.Bind<int>("Options", "InventoryHeight", 8, "Inventory width");
 
@@ -110,15 +111,15 @@ namespace InventorySize
                     return;
                 RectTransform rtg = __instance.rectTransform;
                 var cellSize = 71;
-                var columns = Math.Min(___container.sizeX, 9);
-                var containerSize = new Vector2(columns * cellSize, 10 * cellSize);
+                var columns = Math.Min(___container.sizeX, 7);
+                var containerSize = new Vector2(columns * cellSize + overflowOffset.Value, 10 * cellSize + overflowOffset.Value);
                 var gridSize = new Vector2(___container.sizeX * cellSize, ___container.sizeY * cellSize);
 
-                if (containerSize.y < gridSize.y && __instance.transform.parent.name != "Mask")
+                if ((containerSize.x < gridSize.x || containerSize.y < gridSize.y) && __instance.transform.parent.name != "Mask")
                 {
                     Dbgl($"Adding scroll view");
 
-                    GameObject scrollObject = new GameObject() { name = "ScrollView" };
+                    GameObject scrollObject = new GameObject() { name = "InventoryScrollView" };
                     scrollObject.transform.SetParent(__instance.transform.parent);
                     rts = scrollObject.AddComponent<RectTransform>();
 
@@ -146,18 +147,9 @@ namespace InventorySize
 
                 rts.sizeDelta = containerSize;
                 rts.localScale = new Vector3(1, 1, 1);
-                if(columns > 7)
-                {
-                    rts.anchorMax = new Vector2(0.5f, 0.5f);
-                    rts.anchorMin = new Vector2(0.5f, 0.5f);
-                    rts.anchoredPosition = new Vector2(-cellSize * (columns / 2f - 1), -cellSize);
-                }
-                else
-                {
-                    rts.anchorMax = new Vector2(0.25f, 0.5f);
-                    rts.anchorMin = new Vector2(0.25f, 0.5f);
-                    rts.anchoredPosition = new Vector2(cellSize / 2f, -cellSize);
-                }
+                rts.anchorMax = new Vector2(0.25f, 0.5f);
+                rts.anchorMin = new Vector2(0.25f, 0.5f);
+                rts.anchoredPosition = new Vector2(cellSize / 4f, -cellSize);
 
                 sr.verticalNormalizedPosition = 1;
                 sr.horizontalNormalizedPosition = 0;

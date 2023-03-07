@@ -8,20 +8,26 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace StorageSizeMod
 {
-    [BepInPlugin("aedenthorn.StorageSizeMod", "Storage Size Mod", "0.2.0")]
+    [BepInPlugin("aedenthorn.StorageSizeMod", "Storage Size Mod", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
-        public static ConfigEntry<float> range;
+        public static ConfigEntry<float> overflowOffset;
+
         private static Dictionary<string, XY> containerTypes = new Dictionary<string, XY>();
         private static string fileName = "container_types.json";
         private static bool skip;
+
+        private static RectTransform rts;
+        private static RectTransform rtm;
+        private static ScrollRect sr;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -34,6 +40,7 @@ namespace StorageSizeMod
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
+            overflowOffset = Config.Bind<float>("Options", "OverflowOffset", 20f, "Overflow offset to show part of the offscreen storage grid in UI");
             
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
@@ -168,6 +175,71 @@ namespace StorageSizeMod
                     return false;
                 }
                 return true;
+            }
+        }
+        [HarmonyPatch(typeof(uGUI_ItemsContainer), nameof(uGUI_ItemsContainer.Init))]
+        private static class uGUI_ItemsContainer_Init_Patch
+        {
+            public static void Postfix(uGUI_ItemsContainer __instance, ItemsContainer ___container)
+            {
+                if (!modEnabled.Value || __instance != __instance.inventory.storage)
+                    return;
+                RectTransform rtg = __instance.rectTransform;
+                var cellSize = 71;
+                var columns = Math.Min(___container.sizeX, 7);
+                var containerSize = new Vector2(columns * cellSize + overflowOffset.Value, 10 * cellSize + overflowOffset.Value);
+                var gridSize = new Vector2(___container.sizeX * cellSize, ___container.sizeY * cellSize);
+
+                if ((containerSize.x < gridSize.x || containerSize.y < gridSize.y) && __instance.transform.parent.name != "Mask")
+                {
+                    Dbgl($"Adding scroll view");
+
+                    GameObject scrollObject = new GameObject() { name = "StorageScrollView" };
+                    scrollObject.transform.SetParent(__instance.transform.parent);
+                    rts = scrollObject.AddComponent<RectTransform>();
+
+                    GameObject mask = new GameObject { name = "Mask" };
+                    mask.transform.SetParent(scrollObject.transform);
+                    rtm = mask.AddComponent<RectTransform>();
+
+                    __instance.transform.SetParent(mask.transform);
+
+                    Texture2D tex = new Texture2D((int)Mathf.Ceil(rtm.rect.width), (int)Mathf.Ceil(rtm.rect.height));
+                    Image image = mask.AddComponent<Image>();
+                    image.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), Vector2.zero);
+                    Mask m = mask.AddComponent<Mask>();
+                    m.showMaskGraphic = false;
+
+                    sr = scrollObject.AddComponent<ScrollRect>();
+                    sr.movementType = ScrollRect.MovementType.Clamped;
+                    sr.horizontal = true;
+                    sr.viewport = mask.GetComponent<RectTransform>();
+                    sr.content = rtg;
+                    sr.scrollSensitivity = 10;
+
+                    Dbgl("Added scroll view");
+                }
+                rts.sizeDelta = containerSize;
+                rts.localScale = new Vector3(1f, 1f, 1f);
+                rts.localEulerAngles = Vector3.zero;
+
+                rts.anchorMax = new Vector2(0.75f, 0.5f);
+                rts.anchorMin = new Vector2(0.75f, 0.5f);
+                rts.anchoredPosition3D = new Vector3(-cellSize / 4f, -cellSize, 0);
+
+                rtm.anchoredPosition3D = Vector3.zero;
+                rtm.sizeDelta = containerSize;
+                rtm.localScale = new Vector3(1, 1, 1);
+                rtm.localEulerAngles = Vector3.zero;
+
+                rtg.anchoredPosition3D = Vector3.zero;
+                rtg.anchorMax = new Vector2(0.5f, 0.5f);
+                rtg.anchorMin = new Vector2(0.5f, 0.5f);
+                rtg.sizeDelta = gridSize;
+                rtg.localScale = new Vector3(1, 1, 1);
+                rtg.localEulerAngles = Vector3.zero;
+                sr.verticalNormalizedPosition = 1;
+                sr.horizontalNormalizedPosition = 0;
             }
         }
     }
