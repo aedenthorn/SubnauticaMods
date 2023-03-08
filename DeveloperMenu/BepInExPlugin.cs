@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace DeveloperMenu
 {
-    [BepInPlugin("aedenthorn.DeveloperMenu", "DeveloperMenu", "0.1.0")]
+    [BepInPlugin("aedenthorn.DeveloperMenu", "DeveloperMenu", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -47,10 +47,6 @@ namespace DeveloperMenu
                 if (!__result)
                 {
                     __result = modEnabled.Value && hotKey.Value.IsDown();
-                    if(__result)
-                    {
-                        ErrorMessage.AddWarning("Developer mode toggled");
-                    }
                 }
             }
         }
@@ -86,10 +82,14 @@ namespace DeveloperMenu
                 giveList.Sort(delegate (CommandData a, CommandData b) {
                     return Language.main.Get(a.label).CompareTo(Language.main.Get(b.label));
                 });
-                foreach(var give in giveList)
+                var mi = AccessTools.Method(typeof(uGUI_DeveloperPanel), "AddConsoleCommandButton");
+                foreach (var give in giveList)
                 {
-                    AccessTools.Method(typeof(uGUI_DeveloperPanel), "AddConsoleCommandButton").Invoke(__instance, new object[] { tabIndex, give.command, give.label, give.close });
+                    mi.Invoke(__instance, new object[] { tabIndex, give.command, give.label, give.close });
                 }
+
+                AccessTools.Method(typeof(uGUI_DeveloperPanel), "AddGraphicsTab").Invoke(__instance, new object[0]);
+                //AccessTools.Method(typeof(uGUI_DeveloperPanel), "AddTestingTab").Invoke(__instance, new object[0]);
             }
         }
         [HarmonyPatch(typeof(uGUI_DeveloperPanel), "AddCommandsTab")]
