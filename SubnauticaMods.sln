@@ -21,6 +21,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoHarvest", "AutoHarvest\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickStore", "QuickStore\QuickStore.csproj", "{FC72E32D-566E-440A-B39B-C0795F69D1A3}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BedTeleport", "BedTeleport\BedTeleport.csproj", "{1A172A37-4941-4E4B-9DAF-CBDAE03D7837}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeveloperMenu", "DeveloperMenu\DeveloperMenu.csproj", "{F678622B-FFCA-485C-A04A-34C7FDEC64F9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +67,14 @@ Global
 		{FC72E32D-566E-440A-B39B-C0795F69D1A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC72E32D-566E-440A-B39B-C0795F69D1A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC72E32D-566E-440A-B39B-C0795F69D1A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A172A37-4941-4E4B-9DAF-CBDAE03D7837}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A172A37-4941-4E4B-9DAF-CBDAE03D7837}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A172A37-4941-4E4B-9DAF-CBDAE03D7837}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A172A37-4941-4E4B-9DAF-CBDAE03D7837}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F678622B-FFCA-485C-A04A-34C7FDEC64F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F678622B-FFCA-485C-A04A-34C7FDEC64F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F678622B-FFCA-485C-A04A-34C7FDEC64F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F678622B-FFCA-485C-A04A-34C7FDEC64F9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

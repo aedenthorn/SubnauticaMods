@@ -13,7 +13,7 @@ using UWE;
 
 namespace AutoHarvest
 {
-    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.2.1")]
+    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.2.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -128,7 +128,7 @@ namespace AutoHarvest
             //Physics.OverlapSphereNonAlloc(Player.main.transform.position, 100, colliders);
 
             //Dbgl($"Found {colliders.Length} colliders on layer 0");
-
+            bool reset = false;
             foreach (var c in colliders)
             {
                 if (breakBreakables.Value)
@@ -148,8 +148,7 @@ namespace AutoHarvest
                         r.BreakIntoResources();
                         if (autoPickupBreakables.Value)
                         {
-                            CancelInvoke("CheckAutoHarvest");
-                            InvokeRepeating("CheckAutoHarvest", 0.1f, interval.Value);
+                            reset = true;
                         }
                         continue;
                     }
@@ -165,13 +164,18 @@ namespace AutoHarvest
                     {
                         p = c.GetComponentInChildren<Pickupable>();
                     }
-                    if (p && IsAllowed(p.gameObject))
+                    if (p)
                     {
-                        Dbgl($"Picking up {p.name} ({c.gameObject.layer})");
+                        //Dbgl($"Picking up {p.name} ({c.gameObject.layer})");
                         Pickup(p);
                         continue;
                     }
                 }
+            }
+            if (reset)
+            {
+                CancelInvoke("CheckAutoHarvest");
+                InvokeRepeating("CheckAutoHarvest", 0.1f, interval.Value);
             }
         }
 
@@ -234,7 +238,7 @@ namespace AutoHarvest
             {
                 Debug.LogErrorFormat("Failed to get pickupable from " + go.name, Array.Empty<object>());
             }
-            else if (IsAllowed(pickupable.gameObject))
+            else
             {
                 Pickup(pickupable);
             }
@@ -243,7 +247,7 @@ namespace AutoHarvest
 
         private static void Pickup(Pickupable pickupable)
         {
-            if (pickupable.isPickupable && (!preventPickingUpDropped.Value || AccessTools.FieldRefAccess<Pickupable, float>(pickupable, "timeDropped") == 0) && Player.main.HasInventoryRoom(pickupable))
+            if (!pickupable.attached && IsAllowed(pickupable.gameObject) && pickupable.isPickupable && (!preventPickingUpDropped.Value || AccessTools.FieldRefAccess<Pickupable, float>(pickupable, "timeDropped") == 0) && Player.main.HasInventoryRoom(pickupable))
             {
                 Debug.Log("Picking up " + pickupable.GetTechName());
                 if (!Inventory.Get().Pickup(pickupable, false))
