@@ -142,7 +142,7 @@ namespace InventorySize
                     sr.horizontal = true;
                     sr.viewport = mask.GetComponent<RectTransform>();
                     sr.content = rtg;
-                    sr.scrollSensitivity = 10;
+                    sr.scrollSensitivity = 50;
 
                     Dbgl("Added scroll view");
                 }

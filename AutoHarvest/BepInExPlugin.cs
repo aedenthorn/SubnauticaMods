@@ -13,7 +13,7 @@ using UWE;
 
 namespace AutoHarvest
 {
-    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.3.1")]
+    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.3.4")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -40,6 +40,8 @@ namespace AutoHarvest
         public static string[] forbiddenTypes = new string[0];
         private static string allowedFile = "allowed_types.txt";
         private static string forbiddenFile = "forbidden_types.txt";
+        
+        private static FieldInfo inventoryItemField = AccessTools.Field(typeof(Pickupable), "inventoryItem");
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -205,82 +207,19 @@ namespace AutoHarvest
             }
         }
 
-        private void BreakIntoResources(BreakableResource r)
-        {
-            bool broken = AccessTools.FieldRefAccess<BreakableResource, bool>(r, "broken");
-            if (!broken)
-            {
-                broken = true;
-                r.SendMessage("OnBreakResource", null, SendMessageOptions.DontRequireReceiver);
-                if (r.gameObject.GetComponent<VFXBurstModel>())
-                {
-                    r.gameObject.BroadcastMessage("OnKill");
-                }
-                else
-                {
-                    Destroy(r.gameObject);
-                }
-                if (r.customGoalText != "")
-                {
-                    GoalManager.main.OnCustomGoalEvent(r.customGoalText);
-                }
-                bool flag = false;
-                for (int i = 0; i < r.numChances; i++)
-                {
-                    AssetReferenceGameObject assetReferenceGameObject = (AssetReferenceGameObject)AccessTools.Method(typeof(BreakableResource), "ChooseRandomResource").Invoke(r, new object[] { });
-                    if (assetReferenceGameObject != null)
-                    {
-                        CoroutineHost.StartCoroutine(SpawnResourceFromPrefab(assetReferenceGameObject, r));
-                        flag = true;
-                    }
-                }
-                if (!flag)
-                {
-                    CoroutineHost.StartCoroutine(SpawnResourceFromPrefab(r.defaultPrefabReference, r));
-                }
-                FMODUWE.PlayOneShot(r.breakSound, r.transform.position, 1f);
-                if (r.hitFX)
-                {
-                    Utils.PlayOneShotPS(r.breakFX, r.transform.position, Quaternion.Euler(new Vector3(270f, 0f, 0f)), null);
-                }
-            }
-        }
-
-        private static IEnumerator SpawnResourceFromPrefab(AssetReferenceGameObject breakPrefab, BreakableResource r)
-        {
-            CoroutineTask<GameObject> result = AddressablesUtility.InstantiateAsync(breakPrefab.RuntimeKey as string, null, r.transform.position, default(Quaternion), true);
-            yield return result;
-            GameObject go = result.GetResult();
-            if (go == null)
-            {
-                Debug.LogErrorFormat("Failed to spawn {0}" + breakPrefab.RuntimeKey, Array.Empty<object>());
-                yield break;
-            }
-            Rigidbody rigidbody = go.EnsureComponent<Rigidbody>();
-            UWE.Utils.SetIsKinematicAndUpdateInterpolation(rigidbody, false, false);
-
-            Pickupable pickupable = go.GetComponent<Pickupable>();
-            if (!pickupable)
-            {
-                Debug.LogErrorFormat("Failed to get pickupable from " + go.name, Array.Empty<object>());
-            }
-            else
-            {
-                Pickup(pickupable);
-            }
-            yield break;
-        }
-
         private static void Pickup(Pickupable pickupable)
         {
-            if (!pickupable.attached && IsAllowed(pickupable.gameObject) && pickupable.isPickupable && (!preventPickingUpDropped.Value || AccessTools.FieldRefAccess<Pickupable, float>(pickupable, "timeDropped") == 0) && Player.main.HasInventoryRoom(pickupable))
+            var ii = (InventoryItem)inventoryItemField.GetValue(pickupable);
+            if ((ii == null || ii.container == null) && pickupable.isPickupable && (!preventPickingUpDropped.Value || AccessTools.FieldRefAccess<Pickupable, float>(pickupable, "timeDropped") == 0) && Player.main.HasInventoryRoom(pickupable) && IsAllowed(pickupable.gameObject))
             {
+                //Debug.Log("Picking up " + pickupable.GetTechName());
+
                 if (!Inventory.Get().Pickup(pickupable, false))
                 {
                     ErrorMessage.AddWarning(Language.main.Get("InventoryFull"));
                     return;
                 }
-                Debug.Log("Picking up " + pickupable.GetTechName());
+                Debug.Log("Picked up " + pickupable.GetTechName());
                 WaterParkItem component = pickupable.GetComponent<WaterParkItem>();
                 if (component != null)
                 {
@@ -302,7 +241,7 @@ namespace AutoHarvest
                 return false;
 
             string ts = type.ToString();
-            if (forbiddenTypes.Length > 0 && Array.IndexOf(forbiddenTypes, ts) < 0)
+            if (forbiddenTypes.Length > 0 && Array.IndexOf(forbiddenTypes, ts) >= 0)
             {
                 return false;
             }

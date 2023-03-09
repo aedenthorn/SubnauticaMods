@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace StorageSizeMod
 {
-    [BepInPlugin("aedenthorn.StorageSizeMod", "Storage Size Mod", "0.3.1")]
+    [BepInPlugin("aedenthorn.StorageSizeMod", "Storage Size Mod", "0.3.3")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -179,6 +179,19 @@ namespace StorageSizeMod
                 return true;
             }
         }
+        [HarmonyPatch(typeof(uGUI_ItemsContainer), nameof(uGUI_ItemsContainer.Uninit))]
+        private static class uGUI_ItemsContainer_Uninit_Patch
+        {
+            public static void Postfix(uGUI_ItemsContainer __instance, ItemsContainer ___container)
+            {
+                if (!modEnabled.Value || __instance != __instance.inventory.storage || !addScrollview.Value)
+                    return;
+
+                if (__instance.transform.parent.name == "Mask")
+                    __instance.transform.parent.gameObject.SetActive(false);
+
+            }
+        }
         [HarmonyPatch(typeof(uGUI_ItemsContainer), nameof(uGUI_ItemsContainer.Init))]
         private static class uGUI_ItemsContainer_Init_Patch
         {
@@ -186,11 +199,15 @@ namespace StorageSizeMod
             {
                 if (!modEnabled.Value || __instance != __instance.inventory.storage || !addScrollview.Value)
                     return;
+
                 RectTransform rtg = __instance.rectTransform;
                 var cellSize = 71;
                 var columns = Math.Min(___container.sizeX, 7);
                 var containerSize = new Vector2(columns * cellSize + overflowOffset.Value, 10 * cellSize + overflowOffset.Value);
                 var gridSize = new Vector2(___container.sizeX * cellSize, ___container.sizeY * cellSize);
+
+                if (__instance.transform.parent.name == "Mask")
+                    __instance.transform.parent.gameObject.SetActive(true);
 
                 if (containerSize.x >= gridSize.x && containerSize.y >= gridSize.y)
                     return;
@@ -220,10 +237,11 @@ namespace StorageSizeMod
                     sr.horizontal = true;
                     sr.viewport = mask.GetComponent<RectTransform>();
                     sr.content = rtg;
-                    sr.scrollSensitivity = 10;
+                    sr.scrollSensitivity = 50;
 
                     Dbgl("Added scroll view");
                 }
+
                 rts.sizeDelta = containerSize;
                 rts.localScale = new Vector3(1f, 1f, 1f);
                 rts.localEulerAngles = Vector3.zero;

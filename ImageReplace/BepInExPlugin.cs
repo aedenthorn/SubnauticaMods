@@ -178,12 +178,21 @@ namespace ImageReplace
             {
                 if (path.Contains("Originals") || (!path.EndsWith(".png") && !path.EndsWith(".jpg") && !path.EndsWith(".gif") && !path.EndsWith(".jpeg")))
                     continue;
-                var name = Path.GetFileNameWithoutExtension(path);
-                if(name.Contains("_"))
+                string name;
+                if (Path.GetDirectoryName(path).EndsWith("_"))
                 {
-                    var split = name.Split('_');
-                    if (int.TryParse(split[1], out var i))
-                        name = split[0];
+                    name = Path.GetFileName(Path.GetDirectoryName(path));
+                    name = name.Remove(name.Length - 1);
+                }
+                else
+                {
+                    name = Path.GetFileNameWithoutExtension(path);
+                    if (name.Contains("_"))
+                    {
+                        var split = name.Split('_');
+                        if (int.TryParse(split[1], out var i))
+                            name = split[0];
+                    }
                 }
                 if (!imagePaths.TryGetValue(name, out var paths))
                 {
