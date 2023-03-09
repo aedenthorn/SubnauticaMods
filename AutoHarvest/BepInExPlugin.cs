@@ -13,7 +13,7 @@ using UWE;
 
 namespace AutoHarvest
 {
-    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.2.2")]
+    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.3.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -22,7 +22,9 @@ namespace AutoHarvest
         public static ConfigEntry<bool> isDebug;
 
         public static ConfigEntry<bool> breakBreakables;
+        public static ConfigEntry<bool> cutCuttables;
         public static ConfigEntry<bool> autoPickupBreakables;
+        public static ConfigEntry<bool> autoPickupCuttables;
         public static ConfigEntry<bool> pickupables;
         public static ConfigEntry<bool> allowPickupCreature;
         public static ConfigEntry<bool> allowPickupEdible;
@@ -51,9 +53,11 @@ namespace AutoHarvest
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
             toggleKey = Config.Bind<KeyCode>("General", "ToggleKey", KeyCode.End, "Key to press to toggle mod.");
-            preventPickingUpDropped = Config.Bind<bool>("Options", "PreventPickingUpDropped", true, "Prevent auto pickup of dropped items");
+            preventPickingUpDropped = Config.Bind<bool>("Options", "PreventPickingUpDropped", true, "Prevent auto pickup of items dropped by the player");
             breakBreakables = Config.Bind<bool>("Options", "BreakBreakables", true, "Break breakables");
-            autoPickupBreakables = Config.Bind<bool>("Options", "AutoPickupBreakables", true, "Auto-pickup breakables (will override any modded breakable drops)");
+            cutCuttables = Config.Bind<bool>("Options", "CutCuttables", true, "Cut cuttables");
+            autoPickupBreakables = Config.Bind<bool>("Options", "AutoPickupBreakables", true, "Auto-pickup breakables");
+            autoPickupCuttables = Config.Bind<bool>("Options", "AutoPickupCuttables", true, "Auto-pickup cuttables");
             pickupables = Config.Bind<bool>("Options", "Pickupables", true, "Pickup pickupables");
             allowPickupCreature = Config.Bind<bool>("Options", "AllowPickupCreature", true, "Allow pickup creature pickupables (i.e. fish) - respects forbid list");
             allowPickupEdible = Config.Bind<bool>("Options", "AllowPickupEdible", true, "Allow pickup edibles (i.e. fish and plants) - respects forbid list");
@@ -121,7 +125,7 @@ namespace AutoHarvest
 
         private void CheckAutoHarvest()
         {
-            if(!modEnabled.Value || Player.main is null)
+            if(!modEnabled.Value || Player.main == null || Player.main.transform == null)
                 return;
             Collider[] colliders = Physics.OverlapSphere(Player.main.transform.position, range.Value);
             //Collider[] colliders = new Collider[maxHarvest.Value];
@@ -147,6 +151,28 @@ namespace AutoHarvest
                         Dbgl($"Breaking {r.name} ({c.gameObject.layer})");
                         r.BreakIntoResources();
                         if (autoPickupBreakables.Value)
+                        {
+                            reset = true;
+                        }
+                        continue;
+                    }
+                }
+                if (cutCuttables.Value)
+                {
+                    SpawnOnKill s = c.GetComponentInParent<SpawnOnKill>();
+                    if (!s)
+                    {
+                        s = c.GetComponent<SpawnOnKill>();
+                    }
+                    if (!s)
+                    {
+                        s = c.GetComponentInChildren<SpawnOnKill>();
+                    }
+                    if (s && s.GetComponent<LiveMixin>() && IsAllowed(s.prefabToSpawn))
+                    {
+                        Dbgl($"Cutting {s.name} ({c.gameObject.layer})");
+                        s.GetComponent<LiveMixin>().Kill();
+                        if (autoPickupCuttables.Value)
                         {
                             reset = true;
                         }
@@ -249,12 +275,12 @@ namespace AutoHarvest
         {
             if (!pickupable.attached && IsAllowed(pickupable.gameObject) && pickupable.isPickupable && (!preventPickingUpDropped.Value || AccessTools.FieldRefAccess<Pickupable, float>(pickupable, "timeDropped") == 0) && Player.main.HasInventoryRoom(pickupable))
             {
-                Debug.Log("Picking up " + pickupable.GetTechName());
                 if (!Inventory.Get().Pickup(pickupable, false))
                 {
                     ErrorMessage.AddWarning(Language.main.Get("InventoryFull"));
                     return;
                 }
+                Debug.Log("Picking up " + pickupable.GetTechName());
                 WaterParkItem component = pickupable.GetComponent<WaterParkItem>();
                 if (component != null)
                 {
@@ -276,9 +302,11 @@ namespace AutoHarvest
                 return false;
 
             string ts = type.ToString();
-            if (forbiddenTypes.Length > 0 && forbiddenTypes.FirstOrDefault(s => s == ts || (s.StartsWith("*") && s.EndsWith("*") && ts.Contains(s.Substring(1, s.Length - 2))) || (s.StartsWith("*") && ts.EndsWith(s.Substring(1))) || (s.EndsWith("*") && ts.StartsWith(s.Substring(0, s.Length - 1)))) != null)
+            if (forbiddenTypes.Length > 0 && Array.IndexOf(forbiddenTypes, ts) < 0)
+            {
                 return false;
-            return allowedTypes.Length > 0 && allowedTypes.FirstOrDefault(s => s == ts || (s.StartsWith("*") && s.EndsWith("*") && ts.Contains(s.Substring(1, s.Length - 2))) || (s.StartsWith("*") && ts.EndsWith(s.Substring(1))) || (s.EndsWith("*") && ts.StartsWith(s.Substring(0, s.Length - 1)))) != null;
+            }
+            return allowedTypes.Length > 0 && Array.IndexOf(allowedTypes, ts) >= 0;
         }
 
 

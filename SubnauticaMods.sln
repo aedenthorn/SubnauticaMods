@@ -25,6 +25,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BedTeleport", "BedTeleport\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeveloperMenu", "DeveloperMenu\DeveloperMenu.csproj", "{F678622B-FFCA-485C-A04A-34C7FDEC64F9}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageReplace", "ImageReplace\ImageReplace.csproj", "{C7415EAE-4AD1-4F44-AA4B-CD2F7CD6C857}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickBatterySwitch", "QuickBatterySwitch\QuickBatterySwitch.csproj", "{0885860A-E291-42A5-B8F8-BA0015E376CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +79,14 @@ Global
 		{F678622B-FFCA-485C-A04A-34C7FDEC64F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F678622B-FFCA-485C-A04A-34C7FDEC64F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F678622B-FFCA-485C-A04A-34C7FDEC64F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7415EAE-4AD1-4F44-AA4B-CD2F7CD6C857}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7415EAE-4AD1-4F44-AA4B-CD2F7CD6C857}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7415EAE-4AD1-4F44-AA4B-CD2F7CD6C857}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7415EAE-4AD1-4F44-AA4B-CD2F7CD6C857}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0885860A-E291-42A5-B8F8-BA0015E376CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0885860A-E291-42A5-B8F8-BA0015E376CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0885860A-E291-42A5-B8F8-BA0015E376CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0885860A-E291-42A5-B8F8-BA0015E376CF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

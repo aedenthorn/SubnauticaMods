@@ -2,8 +2,10 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -11,7 +13,7 @@ using UnityEngine;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "QuickStore", "0.2.0")]
+    [BepInPlugin("aedenthorn.QuickStore", "QuickStore", "0.2.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -72,13 +74,6 @@ namespace QuickStore
         private IEnumerator StoreItemsRoutine()
         {
 
-            yield return StoreItems(!Input.GetKey(modHotKey.Value));
-
-            yield break;
-        }
-
-        private static bool StoreItems(bool require)
-        {
             int count = 0;
             var array = ((Component[])FindObjectsOfType<StorageContainer>()).Concat(FindObjectsOfType<SeamothStorageContainer>());
             for (int i = 0; i < array.Count(); i++)
@@ -86,15 +81,16 @@ namespace QuickStore
                 if (Vector3.Distance(Player.main.transform.position, array.ElementAt(i).transform.position) > range.Value)
                     continue;
                 ItemsContainer ic = (ItemsContainer)AccessTools.Property(array.ElementAt(i).GetType(), "container").GetValue(array.ElementAt(i));
-                count += TransferItems(Inventory.main.container, ic, require);
+                count += TransferItems(Inventory.main.container, ic, !Input.GetKey(modHotKey.Value));
+                yield return null;
             }
 
-            if(!string.IsNullOrEmpty(storedMessage.Value))
+            if (!string.IsNullOrEmpty(storedMessage.Value))
                 ErrorMessage.AddWarning(string.Format(storedMessage.Value, count));
 
-            return true;
+            yield break;
         }
-        
+
         private static int TransferItems(ItemsContainer source, ItemsContainer dest, bool require)
         {
             int count = 0;
@@ -149,9 +145,11 @@ namespace QuickStore
         private static bool IsAllowed(TechType type)
         {
             string ts = type.ToString();
-            if (forbiddenTypes.Length > 0 && forbiddenTypes.FirstOrDefault(s => s == ts || (s.StartsWith("*") && s.EndsWith("*") && ts.Contains(s.Substring(1, s.Length - 2))) || (s.StartsWith("*") && ts.EndsWith(s.Substring(1))) || (s.EndsWith("*") && ts.StartsWith(s.Substring(0, s.Length - 1)))) != null)
+            if (forbiddenTypes.Length > 0 && Array.IndexOf(forbiddenTypes, ts) < 0)
+            {
                 return false;
-            return allowedTypes.Length > 0 && allowedTypes.FirstOrDefault(s => s == ts || (s.StartsWith("*") && s.EndsWith("*") && ts.Contains(s.Substring(1, s.Length - 2))) || (s.StartsWith("*") && ts.EndsWith(s.Substring(1))) || (s.EndsWith("*") && ts.StartsWith(s.Substring(0, s.Length - 1)))) != null;
+            }
+            return allowedTypes.Length > 0 && Array.IndexOf(allowedTypes, ts) >= 0;
         }
 
         [HarmonyPatch(typeof(uGUI_ItemsContainer), nameof(uGUI_ItemsContainer.DoUpdate))]
