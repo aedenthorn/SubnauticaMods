@@ -7,13 +7,6 @@ namespace BedTeleport
 {
     public class TeleportMenu : uGUI_InputGroup, uGUI_IButtonReceiver
     {
-        protected override void Awake()
-        {
-            base.Awake();
-            interactionRaycaster = (uGUI_GraphicRaycaster)AccessTools.Field(typeof(IngameMenu), "interactionRaycaster").GetValue(IngameMenu.main);
-            interactionRaycaster.updateRaycasterStatusDelegate = new uGUI_GraphicRaycaster.UpdateRaycasterStatus(UpdateRaycasterStatus);
-        }
-
         public bool OnButtonDown(GameInput.Button button)
         {
             if (button == GameInput.Button.UIMenu)

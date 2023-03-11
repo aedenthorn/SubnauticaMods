@@ -13,7 +13,7 @@ using UWE;
 
 namespace BedTeleport
 {
-    [BepInPlugin("aedenthorn.BedTeleport", "BedTeleport", "0.1.0")]
+    [BepInPlugin("aedenthorn.BedTeleport", "BedTeleport", "0.1.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

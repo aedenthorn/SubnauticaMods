@@ -17,6 +17,7 @@ namespace DeveloperMenu
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
 
+        public static ConfigEntry<bool> developerModeEnabled;
         public static ConfigEntry<float> range;
         public static ConfigEntry<string> spawnTabLabel;
         public static ConfigEntry<KeyboardShortcut> hotKey;
@@ -32,6 +33,7 @@ namespace DeveloperMenu
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
+            developerModeEnabled = Config.Bind<bool>("Options", "DeveloperModeEnabled", false, "Whether developer mode is enabled");
             hotKey = Config.Bind<KeyboardShortcut>("Options", "HotKey", new KeyboardShortcut(KeyCode.Backslash), "Key to press to toggle developer menu.");
             spawnTabLabel = Config.Bind<string>("Options", "SpawnTabLabel", "Spawn", "Spawn tab label.");
 
@@ -44,10 +46,14 @@ namespace DeveloperMenu
         {
             static void Postfix(GameInput __instance, ref bool __result)
             {
-                if (!__result)
+                if (!modEnabled.Value)
+                    return;
+                if (hotKey.Value.IsDown())
                 {
-                    __result = modEnabled.Value && hotKey.Value.IsDown();
+                    developerModeEnabled.Value = !developerModeEnabled.Value;
+                    Dbgl($"Developer mode enabled: {developerModeEnabled.Value}");
                 }
+                __result = developerModeEnabled.Value;
             }
         }
         [HarmonyPatch(typeof(PlatformUtils), nameof(PlatformUtils.GetDevToolsEnabled))]
