@@ -15,7 +15,7 @@ using Random = UnityEngine.Random;
 
 namespace ImageReplace
 {
-    [BepInPlugin("aedenthorn.ImageReplace", "Image Replace", "0.2.0")]
+    [BepInPlugin("aedenthorn.ImageReplace", "Image Replace", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -43,7 +43,7 @@ namespace ImageReplace
 
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
-            isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
+            isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
             hotKey = Config.Bind<KeyboardShortcut>("Options", "HotKey", new KeyboardShortcut(KeyCode.F5), "Key to press to reload images.");
             dumpHotKey = Config.Bind<KeyboardShortcut>("Options", "DumpHotKey", new KeyboardShortcut(KeyCode.PageUp), "Key to press to dump image paths.");
 
@@ -132,7 +132,7 @@ namespace ImageReplace
                 yield break;
             }
             var path = paths.Count > 1 ? paths[Random.Range(0, paths.Count)] : paths[0];
-            Dbgl($"Replacing {image.name} texture {name}");
+            //Dbgl($"Replacing {image.name} texture {name}");
 
             if (!cachedTextures.TryGetValue(path, out var tex))
             {
@@ -157,7 +157,7 @@ namespace ImageReplace
             skip = true;
             image.sprite = Sprite.Create(tex, GetRect(originalTextures[name].rect, originalTextures[name].width, originalTextures[name].height, tex), new Vector2(0, 0));
             skip = false;
-            Dbgl($"Replaced {image.name} texture {name}");
+            //Dbgl($"Replaced {image.name} texture {name}");
             yield break;
         }
 
@@ -167,7 +167,7 @@ namespace ImageReplace
                 return rect;
             float sizeDiff = Math.Min(tex.width / (float)width, tex.height / (float)height);
             Rect newRect = new Rect((int)(rect.x * sizeDiff), (int)(rect.y * sizeDiff), (int)(rect.width * sizeDiff), (int)(rect.height * sizeDiff));
-            Dbgl($"Rect {rect}; source {width}x{height}; dest {tex.width}x{tex.height}; size diff {sizeDiff}; new rect {newRect}");
+            //Dbgl($"Rect {rect}; source {width}x{height}; dest {tex.width}x{tex.height}; size diff {sizeDiff}; new rect {newRect}");
             return newRect;
         }
 
@@ -199,7 +199,7 @@ namespace ImageReplace
                     imagePaths[name] = new List<string>();
                 }
 
-                Dbgl($"adding {name}");
+                //Dbgl($"adding {name}");
                 imagePaths[name].Add(path);
             }
             yield break;

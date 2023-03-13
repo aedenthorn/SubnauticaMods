@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageReplace", "ImageReplac
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickBatterySwitch", "QuickBatterySwitch\QuickBatterySwitch.csproj", "{0885860A-E291-42A5-B8F8-BA0015E376CF}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimplePosters", "SimplePosters\SimplePosters.csproj", "{6789104D-FB04-41FD-83FB-793C9E8F7640}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,10 @@ Global
 		{0885860A-E291-42A5-B8F8-BA0015E376CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0885860A-E291-42A5-B8F8-BA0015E376CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0885860A-E291-42A5-B8F8-BA0015E376CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6789104D-FB04-41FD-83FB-793C9E8F7640}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6789104D-FB04-41FD-83FB-793C9E8F7640}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6789104D-FB04-41FD-83FB-793C9E8F7640}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6789104D-FB04-41FD-83FB-793C9E8F7640}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -10,6 +10,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UWE;
+using static HandReticle;
 
 namespace BedTeleport
 {
@@ -30,7 +31,8 @@ namespace BedTeleport
         public static ConfigEntry<string> handText;
         
         private static GameObject menuGO;
-        private static bool movingPlayer;
+
+        private static GameObject labelPrefab;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -54,6 +56,33 @@ namespace BedTeleport
             Dbgl("Plugin awake");
 
         }
+
+        //[HarmonyPatch(typeof(Bed), nameof(Bed.Start))]
+        private static class Bed_Start_Patch
+        {
+
+            static void Prefix(Bed __instance)
+            {
+
+                if (!modEnabled.Value)
+                    return;
+                context.StartCoroutine(ApplyLabel(__instance));
+            }
+        }
+        private static IEnumerator ApplyLabel(Bed bed)
+        {
+            if(labelPrefab == null)
+            {
+                CoroutineTask<GameObject> request = CraftData.GetPrefabForTechTypeAsync(TechType.SmallStorage, false);
+                yield return request;
+                labelPrefab = request.GetResult()?.transform?.Find("LidLabel")?.gameObject;
+            }
+            if (labelPrefab == null)
+                yield break;
+            Instantiate(labelPrefab, bed.transform);
+            yield break;
+        }
+
 
         [HarmonyPatch(typeof(Bed), nameof(Bed.OnHandClick))]
         private static class Bed_OnHandClick_Patch
@@ -300,7 +329,6 @@ namespace BedTeleport
                 {
                     travelSpeed = magnitude / num;
                 }
-                movingPlayer = true;
                 Player.main.playerController.SetEnabled(false);
                 for (; ; )
                 {
@@ -336,7 +364,6 @@ namespace BedTeleport
             Player.main.OnPlayerPositionCheat();
             Player.main.SetCurrentSub(destBed.GetComponentInParent<SubRoot>(), true);
             Player.main.playerController.SetEnabled(true);
-            movingPlayer = false;
             yield break;
         }
     }
