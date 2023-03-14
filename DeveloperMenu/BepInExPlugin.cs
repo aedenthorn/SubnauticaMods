@@ -3,13 +3,14 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
 namespace DeveloperMenu
 {
-    [BepInPlugin("aedenthorn.DeveloperMenu", "DeveloperMenu", "0.2.0")]
+    [BepInPlugin("aedenthorn.DeveloperMenu", "DeveloperMenu", "0.3.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -21,6 +22,7 @@ namespace DeveloperMenu
         public static ConfigEntry<float> range;
         public static ConfigEntry<string> spawnTabLabel;
         public static ConfigEntry<KeyboardShortcut> hotKey;
+        public static ConfigEntry<KeyCode> ingredientsModKey;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -35,6 +37,7 @@ namespace DeveloperMenu
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
             developerModeEnabled = Config.Bind<bool>("Options", "DeveloperModeEnabled", false, "Whether developer mode is enabled");
             hotKey = Config.Bind<KeyboardShortcut>("Options", "HotKey", new KeyboardShortcut(KeyCode.Backslash), "Key to press to toggle developer menu.");
+            ingredientsModKey = Config.Bind<KeyCode>("Options", "IngredientsModKey", KeyCode.LeftShift, "Key to hold when pressing give button to give ingredients instead.");
             spawnTabLabel = Config.Bind<string>("Options", "SpawnTabLabel", "Spawn", "Spawn tab label.");
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), Info.Metadata.GUID);
@@ -67,6 +70,64 @@ namespace DeveloperMenu
                 return false;
             }
         }
+        [HarmonyPatch(typeof(InventoryConsoleCommands), "OnConsoleCommand_item")]
+        private static class InventoryConsoleCommands_OnConsoleCommand_item_Patch
+        {
+            static bool Prefix(InventoryConsoleCommands __instance, NotificationCenter.Notification n)
+            {
+                if (!modEnabled.Value || !Input.GetKey(ingredientsModKey.Value))
+                    return true;
+
+                if (n != null && n.data != null && n.data.Count > 0)
+                {
+                    string text = (string)n.data[0];
+                    TechType techType;
+                    if (!UWE.Utils.TryParseEnum<TechType>(text, out techType))
+                        return true;
+                    ITechData techData = CraftData.Get(techType, true);
+                    if (techData == null)
+                        return true;
+                    Dbgl($"Spawning {techData.ingredientCount} ingredients for {techType}");
+
+                    for (int i = 0; i < techData.ingredientCount; i++)
+                    {
+                        var ing = techData.GetIngredient(i);
+                        if (CraftData.IsAllowed(ing.techType))
+                        {
+                            int number = ing.amount;
+                            Dbgl($"Spawning {ing.amount}x {ing.techType}");
+                            __instance.StartCoroutine(ItemCmdSpawnAsync(number, ing.techType));
+                        }
+                    }
+                }
+                return false;
+            }
+        }
+
+        private static IEnumerator ItemCmdSpawnAsync(int number, TechType techType)
+        {
+            TaskResult<GameObject> result = new TaskResult<GameObject>();
+            int num;
+            for (int i = 0; i < number; i = num + 1)
+            {
+                yield return CraftData.InstantiateFromPrefabAsync(techType, result, false);
+                GameObject gameObject = result.Get();
+                if (gameObject != null)
+                {
+                    gameObject.transform.position = MainCamera.camera.transform.position + MainCamera.camera.transform.forward * 3f;
+                    CrafterLogic.NotifyCraftEnd(gameObject, techType);
+                    Pickupable component = gameObject.GetComponent<Pickupable>();
+                    if (component != null && !Inventory.main.Pickup(component, false))
+                    {
+                        ErrorMessage.AddError(Language.main.Get("InventoryFull"));
+                    }
+                }
+                num = i;
+            }
+            yield break;
+        }
+
+
         [HarmonyPatch(typeof(uGUI_DeveloperPanel), "AddTabs")]
         private static class uGUI_DeveloperPanel_AddTabs_Patch
         {

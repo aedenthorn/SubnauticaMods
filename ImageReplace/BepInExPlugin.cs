@@ -15,7 +15,7 @@ using Random = UnityEngine.Random;
 
 namespace ImageReplace
 {
-    [BepInPlugin("aedenthorn.ImageReplace", "Image Replace", "0.3.0")]
+    [BepInPlugin("aedenthorn.ImageReplace", "Image Replace", "0.3.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
