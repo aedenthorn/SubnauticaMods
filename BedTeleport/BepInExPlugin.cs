@@ -3,8 +3,10 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using FMOD.Studio;
 using HarmonyLib;
+using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
@@ -14,7 +16,7 @@ using static HandReticle;
 
 namespace BedTeleport
 {
-    [BepInPlugin("aedenthorn.BedTeleport", "BedTeleport", "0.1.1")]
+    [BepInPlugin("aedenthorn.BedTeleport", "BedTeleport", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -24,15 +26,20 @@ namespace BedTeleport
 
         public static ConfigEntry<bool> immediate;
         public static ConfigEntry<bool> playSound;
+        public static ConfigEntry<bool> allowLabels;
         public static ConfigEntry<float> range;
         public static ConfigEntry<KeyCode> modHotKey;
         
         public static ConfigEntry<string> menuHeader;
         public static ConfigEntry<string> handText;
+        public static ConfigEntry<string> labelTitle;
+        public static ConfigEntry<string> labelEdit;
+        public static Dictionary<string, string> bedLabels = new Dictionary<string, string>();
         
         private static GameObject menuGO;
 
         private static GameObject labelPrefab;
+        private string labelsPath;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -47,24 +54,54 @@ namespace BedTeleport
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
             immediate = Config.Bind<bool>("Options", "Immediate", false, "Skip the movement visual");
             playSound = Config.Bind<bool>("Options", "PlaySound", true, "Play teleport sound");
+            allowLabels = Config.Bind<bool>("Options", "AllowLabels", true, "Allow labelling beds.");
             modHotKey = Config.Bind<KeyCode>("Options", "HotKeyMod", KeyCode.LeftShift, "Key to hold to allow teleportation.");
             range = Config.Bind<float>("Options", "Range", -1f, "Range (m)");
             menuHeader = Config.Bind<string>("Text", "MenuHeader", "Teleport", "Menu header.");
             handText = Config.Bind<string>("Text", "HandText", "Teleport", "Hover message.");
+            labelTitle = Config.Bind<string>("Text", "LabelTitle", "Bed Name", "Title for label dialogue.");
+            labelEdit = Config.Bind<string>("Text", "LabelEdit", "Edit Bed Name", "Title for label hover indicator.");
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), Info.Metadata.GUID);
             Dbgl("Plugin awake");
 
+            labelsPath = Path.Combine(AedenthornUtils.GetAssetPath(context, true), "labels.json");
+            ReloadLabels();
         }
 
-        //[HarmonyPatch(typeof(Bed), nameof(Bed.Start))]
+        private void ReloadLabels()
+        {
+            if (!allowLabels.Value)
+                return;
+            bedLabels.Clear();
+            if (File.Exists(labelsPath))
+            {
+                try
+                {
+                    bedLabels = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(labelsPath));
+                }
+                catch { }
+            }
+        }
+
+        public static string GetLabel(string id)
+        {
+            return bedLabels.TryGetValue(id, out string label) ? label : null;
+        }
+        public static void SetLabel(string id, string label)
+        {
+            bedLabels[id] = label;
+            File.WriteAllText(Path.Combine(AedenthornUtils.GetAssetPath(context, true), "labels.json"), JsonConvert.SerializeObject(bedLabels, Formatting.Indented));
+        }
+
+        [HarmonyPatch(typeof(Bed), nameof(Bed.Start))]
         private static class Bed_Start_Patch
         {
 
             static void Prefix(Bed __instance)
             {
 
-                if (!modEnabled.Value)
+                if (!modEnabled.Value || !allowLabels.Value)
                     return;
                 context.StartCoroutine(ApplyLabel(__instance));
             }
@@ -73,13 +110,17 @@ namespace BedTeleport
         {
             if(labelPrefab == null)
             {
-                CoroutineTask<GameObject> request = CraftData.GetPrefabForTechTypeAsync(TechType.SmallStorage, false);
+                CoroutineTask<GameObject> request = CraftData.GetPrefabForTechTypeAsync(TechType.Beacon, false);
                 yield return request;
-                labelPrefab = request.GetResult()?.transform?.Find("LidLabel")?.gameObject;
+                labelPrefab = request.GetResult()?.GetComponentInChildren<BeaconLabel>().gameObject;
             }
             if (labelPrefab == null)
                 yield break;
-            Instantiate(labelPrefab, bed.transform);
+            var label = Instantiate(labelPrefab, bed.transform);
+            label.transform.localPosition = new Vector3(0, 1, 0);
+            DestroyImmediate(label.GetComponent<BeaconLabel>());
+            label.AddComponent<BedLabel>();
+            Dbgl("Added label to bed");
             yield break;
         }
 
@@ -96,6 +137,7 @@ namespace BedTeleport
                 return false;
             }
         }
+
         [HarmonyPatch(typeof(Bed), nameof(Bed.OnHandHover))]
         private static class Bed_OnHandHover_Patch
         {
@@ -106,9 +148,9 @@ namespace BedTeleport
                     return true;
                 if (hand.IsFreeToInteract())
                 {
-                    HandReticle.main.SetText(HandReticle.TextType.Hand, handText.Value , true, GameInput.Button.LeftHand);
-                    HandReticle.main.SetText(HandReticle.TextType.HandSubscript, string.Empty, false, GameInput.Button.None);
-                    HandReticle.main.SetIcon(HandReticle.IconType.Hand, 1f);
+                    main.SetText(TextType.Hand, handText.Value , true, GameInput.Button.LeftHand);
+                    main.SetText(TextType.HandSubscript, string.Empty, false, GameInput.Button.None);
+                    main.SetIcon(IconType.Hand, 1f);
                 }
                 return false;
             }
@@ -191,7 +233,15 @@ namespace BedTeleport
                 Destroy(menuGO);
             });
             var text = gameObject.transform.GetComponentInChildren<TextMeshProUGUI>();
-            text.text = GetBedText(source.transform.position, dest.transform.position);
+            var label = dest.GetComponentInChildren<BedLabel>()?.GetLabel();
+            if (!string.IsNullOrEmpty(label) && !label.EndsWith("(Clone)"))
+            {
+                text.text = label;
+            }
+            else
+            {
+                text.text = GetBedText(source.transform.position, dest.transform.position);
+            }
             Dbgl($"Setup button {text.text}");
 
         }

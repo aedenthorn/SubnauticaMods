@@ -23,16 +23,6 @@ namespace BedTeleport
             Deselect();
             Destroy(gameObject);
         }
-        private uGUI_GraphicRaycaster interactionRaycaster;
-        private void UpdateRaycasterStatus(uGUI_GraphicRaycaster raycaster)
-        {
-            if (GameInput.IsPrimaryDeviceGamepad() && !VROptions.GetUseGazeBasedCursor())
-            {
-                raycaster.enabled = false;
-                return;
-            }
-            raycaster.enabled = focused;
-        }
         private void OnEnable()
         {
             uGUI_LegendBar.ClearButtons();

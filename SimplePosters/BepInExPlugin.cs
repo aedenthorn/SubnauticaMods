@@ -27,6 +27,7 @@ namespace SimplePosters
         public static ConfigEntry<string> posterDescription;
         public static ConfigEntry<string> ingredients;
         public static ConfigEntry<float> craftTimeMult;
+        public static ConfigEntry<int> postersPerPage;
 
         public static bool skip;
 
@@ -45,6 +46,7 @@ namespace SimplePosters
             posterDescription = Config.Bind<string>("Options", "PosterDescription", "A custom poster", "Generic poster description");
             ingredients = Config.Bind<string>("Options", "Ingredients", "Titanium:1", "Required ingredients, comma separated TechType:Amount pairs");
             craftTimeMult = Config.Bind<float>("Options", "CraftTimeMult", 1f, "Craft time multiplier.");
+            postersPerPage = Config.Bind<int>("Options", "PostersPerPage", 100, "Posters per page.");
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), Info.Metadata.GUID);
             Dbgl("Plugin awake");
@@ -54,8 +56,6 @@ namespace SimplePosters
         private static IEnumerator LoadPosters()
         {
             Dbgl($"Adding posters");
-
-            CraftTreeHandler.AddTabNode(CraftTree.Type.Fabricator, "SimplePosters", "Posters", SpriteManager.Get(iconTechType.Value));
 
             PosterItem.ingredientList = new List<Ingredient>();
 
@@ -76,8 +76,20 @@ namespace SimplePosters
             PosterItem.prefab = request.GetResult();
 
             List<string> uniques = new List<string>();
-            foreach (string path in Directory.GetFiles(AedenthornUtils.GetAssetPath(context, true), "*.*", SearchOption.AllDirectories))
+            var files = Directory.GetFiles(AedenthornUtils.GetAssetPath(context, true), "*.*", SearchOption.AllDirectories);
+            CraftTreeHandler.AddTabNode(CraftTree.Type.Fabricator, "SimplePosters", "Posters", SpriteManager.Get(iconTechType.Value));
+            if (files.Count() > postersPerPage.Value)
             {
+                int pages = (int)Mathf.Ceil(files.Count() / (float)postersPerPage.Value);
+                for (int i = 1; i <= pages; i++)
+                {
+                    CraftTreeHandler.AddTabNode(CraftTree.Type.Fabricator, i + "", $"Page {i}", SpriteManager.Get(iconTechType.Value), new string[] { "SimplePosters" });
+                }
+            }
+
+            for (int i = 0; i < files.Count(); i++)
+            {
+                var path = files[i];
                 if (!path.EndsWith(".png") && !path.EndsWith(".jpg") && !path.EndsWith(".gif") && !path.EndsWith(".jpeg"))
                     continue;
                 var name = Path.GetFileNameWithoutExtension(path);
@@ -89,9 +101,18 @@ namespace SimplePosters
                 if (tex == null)
                     continue;
                 float scale = GetScaleFromPath(path);
-                var poster = new PosterItem(tex, scale, $"SimplePosters{name.Replace(" ", "")}", name, posterDescription.Value); // Create an instance of your class
-                poster.Patch(); // Call the Patch method
-                Dbgl($"Added poster {name}");
+                int page = (i / postersPerPage.Value) + 1;
+                var strings = files.Count() <= postersPerPage.Value ? new string[] { "SimplePosters" } : new string[] { "SimplePosters", page + "" };
+                try
+                {
+                    var poster = new PosterItem(tex, scale, $"SimplePosters{name.Replace(" ", "")}", name, posterDescription.Value, strings); // Create an instance of your class
+                    poster.Patch(); // Call the Patch method
+                    Dbgl($"Added poster {name}");
+                }
+                catch
+                {
+
+                }
             }
             yield break;
         }

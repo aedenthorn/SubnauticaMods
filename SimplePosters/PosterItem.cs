@@ -15,13 +15,16 @@ namespace SimplePosters
         public float scale = 1;
         public Texture2D texture;
 
-        public PosterItem(Texture2D texture, float scale, string classId, string friendlyName, string description) : base(classId, friendlyName, description)
+        public string[] stepsToFabricator;
+
+        public PosterItem(Texture2D texture, float scale, string classId, string friendlyName, string description, string[] steps) : base(classId, friendlyName, description)
         {
             this.texture = texture;
             this.scale = scale;
+            stepsToFabricator = steps;
         }
         public override CraftTree.Type FabricatorType => CraftTree.Type.Fabricator;
-        public override string[] StepsToFabricatorTab => new string[] { "SimplePosters" };
+        public override string[] StepsToFabricatorTab => stepsToFabricator;
 
         public override EquipmentType EquipmentType => EquipmentType.Hand;
 
