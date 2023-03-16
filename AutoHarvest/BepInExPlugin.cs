@@ -3,17 +3,13 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using System;
-using System.Collections;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UWE;
 
 namespace AutoHarvest
 {
-    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.3.4")]
+    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.4.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -29,6 +25,7 @@ namespace AutoHarvest
         public static ConfigEntry<bool> allowPickupCreature;
         public static ConfigEntry<bool> allowPickupEdible;
         public static ConfigEntry<bool> allowPickupEgg;
+        public static ConfigEntry<bool> allowPickupPlants;
         public static ConfigEntry<bool> preventPickingUpDropped;
         public static ConfigEntry<float> range;
         public static ConfigEntry<float> interval;
@@ -64,6 +61,7 @@ namespace AutoHarvest
             allowPickupCreature = Config.Bind<bool>("Options", "AllowPickupCreature", true, "Allow pickup creature pickupables (i.e. fish) - respects forbid list");
             allowPickupEdible = Config.Bind<bool>("Options", "AllowPickupEdible", true, "Allow pickup edibles (i.e. fish and plants) - respects forbid list");
             allowPickupEgg = Config.Bind<bool>("Options", "AllowPickupEgg", true, "Allow pickup eggs - respects forbid list");
+            allowPickupPlants = Config.Bind<bool>("Options", "AllowPickupPlants", true, "Allow pickup plants - respects forbid list");
             range = Config.Bind<float>("Options", "Range", 3f, "Range (m)");
             interval = Config.Bind<float>("Options", "Interval", 1f, "Harvest interval in seconds");
             disabledMessage = Config.Bind<string>("Text", "DisabledMessage", "Auto harvest disabled.", "Message to show when disabling mod.");
@@ -104,7 +102,7 @@ namespace AutoHarvest
         {
             if (!modEnabled.Value)
                 return;
-            forbiddenTypes = new string[0];
+            forbiddenTypes = new string[] { "MapRoomCamera" };
             allowedTypes = new string[0];
             string folder = AedenthornUtils.GetAssetPath(context, false);
             string f = Path.Combine(folder, forbiddenFile);
@@ -115,6 +113,7 @@ namespace AutoHarvest
                 allowedTypes = Enum.GetNames(typeof(TechType));
                 File.Create(f);
                 File.WriteAllLines(a, allowedTypes);
+                File.WriteAllLines(f, forbiddenTypes);
             }
             else
             {
@@ -133,7 +132,6 @@ namespace AutoHarvest
             //Collider[] colliders = new Collider[maxHarvest.Value];
             //Physics.OverlapSphereNonAlloc(Player.main.transform.position, 100, colliders);
 
-            //Dbgl($"Found {colliders.Length} colliders on layer 0");
             bool reset = false;
             foreach (var c in colliders)
             {
@@ -148,7 +146,7 @@ namespace AutoHarvest
                     {
                         r = c.GetComponentInChildren<BreakableResource>();
                     }
-                    if (r && IsAllowed(r.gameObject))
+                    if (r)
                     {
                         Dbgl($"Breaking {r.name} ({c.gameObject.layer})");
                         r.BreakIntoResources();
@@ -234,6 +232,8 @@ namespace AutoHarvest
                 return false;
             if (!allowPickupEdible.Value && go.GetComponent<Eatable>())
                 return false;
+            if (!allowPickupPlants.Value && go.GetComponent<PlantBehaviour>())
+                return false;
             if (!allowPickupEgg.Value && (go.GetComponent<CreatureEgg>() || go.GetComponent<IncubatorEgg>()))
                 return false;
             TechType type = CraftData.GetTechType(go);
@@ -245,7 +245,11 @@ namespace AutoHarvest
             {
                 return false;
             }
-            return allowedTypes.Length > 0 && Array.IndexOf(allowedTypes, ts) >= 0;
+            if(allowedTypes.Length > 0 && Array.IndexOf(allowedTypes, ts) < 0)
+            {
+                return false;
+            }
+            return true;
         }
 
 
