@@ -16,7 +16,7 @@ using static HandReticle;
 
 namespace BedTeleport
 {
-    [BepInPlugin("aedenthorn.BedTeleport", "BedTeleport", "0.2.0")]
+    [BepInPlugin("aedenthorn.BedTeleport", "BedTeleport", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -359,14 +359,17 @@ namespace BedTeleport
 
         public static IEnumerator GotoLocation(Bed sourceBed, Bed destBed, bool gotoImmediate)
         {
-            Vector3 position = destBed.transform.position + new Vector3(0, 2.5f, 0);
+
+            //Vector3 position = destBed.playerTarget.position + new Vector3(0, 2.5f, 0);
+            Vector3 position = destBed.playerTarget.position;
+            Quaternion rotation = destBed.playerTarget.rotation;
             Vector3 dest = position;
             Vector3 vector = dest - Player.main.transform.position;
             Vector3 direction = vector.normalized;
             float magnitude = vector.magnitude;
             if (gotoImmediate)
             {
-                Player.main.SetPosition(dest);
+                Player.main.SetPosition(dest, rotation);
             }
             else
             {
@@ -395,7 +398,7 @@ namespace BedTeleport
                 }
                 if (playSound.Value)
                     Player.main.teleportingLoopSound.Stop(STOP_MODE.ALLOWFADEOUT);
-                Player.main.SetPosition(dest);
+                Player.main.SetPosition(dest, rotation);
             }
             if (position.y > 0f)
             {
