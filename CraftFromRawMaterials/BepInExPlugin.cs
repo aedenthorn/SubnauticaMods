@@ -2,21 +2,13 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using Newtonsoft.Json;
-using Oculus.Platform.Models;
-using SMLHelper.V2.Crafting;
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.NetworkInformation;
 using System.Reflection;
-using System.Reflection.Emit;
 using UnityEngine;
 
-namespace CraftFromRawIngredients
+namespace CraftFromRawMaterials
 {
-    [BepInPlugin("aedenthorn.CraftFromRawIngredients", "Craft From Raw Ingredients", "0.1.0")]
+    [BepInPlugin("aedenthorn.CraftFromRawMaterials", "Craft From Raw Materials", "0.1.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -45,6 +37,17 @@ namespace CraftFromRawIngredients
 
         }
 
+        [HarmonyPatch(typeof(uGUI_CraftingMenu), "UpdateVisuals")]
+        private static class uGUI_CraftingMenu_UpdateVisuals_Patch
+        {
+            static void Prefix(uGUI_CraftingMenu __instance, ref bool ___resync, ref bool ___isDirty)
+            {
+                if(!modEnabled.Value || (!modKey.Value.IsDown() && !modKeyIgnore.Value.IsDown() && !modKey.Value.IsUp() && !modKeyIgnore.Value.IsUp()))
+                    return;
+                ___resync = true;
+            }
+        }
+
         [HarmonyPatch(typeof(CraftData), nameof(CraftData.Get))]
         private static class CraftData_Get_Patch
         {
@@ -53,7 +56,24 @@ namespace CraftFromRawIngredients
                 if (!modEnabled.Value || (!modKey.Value.IsPressed() && !modKeyIgnore.Value.IsPressed()) || __result is null || __result.ingredientCount == 0)
                     return;
                 MyTechData data = new MyTechData(__result);
-                data._ingredients = GetIngredients(__result, 1);
+                var ingList = GetIngredients(__result, 1);
+                List<MyIngredient> ingredients = new List<MyIngredient>();
+                foreach (var ing in ingList)
+                {
+                    for(int i = 0; i < ingredients.Count; i++)
+                    {
+                        if (ingredients[i].techType == ing.techType)
+                        {
+                            ingredients[i]._amount += ing.amount;
+                            goto cont;
+                        }
+                    }
+                    ingredients.Add(new MyIngredient(ing.techType, ing.amount));
+                cont:
+                    continue;
+                }
+                data._ingredients.Clear();
+                data._ingredients.AddRange(ingredients);
                 __result = data;
             }
 
@@ -77,7 +97,7 @@ namespace CraftFromRawIngredients
                     var product = CraftData.Get(ing.techType, true);
                     if (product != null && product.ingredientCount > 0)
                     {
-                        ingredients.AddRange(GetIngredients(product, ing.amount));
+                        ingredients.AddRange(GetIngredients(product, Mathf.CeilToInt(ing.amount / (float)product.craftAmount)));
                     }
                     else
                     {

@@ -1,4 +1,4 @@
-﻿namespace CraftFromRawIngredients
+﻿namespace CraftFromRawMaterials
 {
     public class MyIngredient : IIngredient
     {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace CraftFromRawIngredients
+namespace CraftFromRawMaterials
 {
     internal class MyTechData : ITechData
     {
