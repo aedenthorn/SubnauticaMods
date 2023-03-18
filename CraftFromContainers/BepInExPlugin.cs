@@ -3,7 +3,6 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -99,7 +98,7 @@ namespace CraftFromContainers
                 {
                     try
                     {
-                        if (CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.transform.position) <= range.Value)
+                        if (__instance.container != cachedContainers[key] && CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.transform.position) <= range.Value)
                         {
                             __result += cachedContainers[key].GetCount(pickupType);
                         }
@@ -146,7 +145,7 @@ namespace CraftFromContainers
             {
                 try
                 {
-                    if (CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.transform.position) <= range.Value)
+                    if (container != cachedContainers[key] && CheckStorageType(key) && Vector3.Distance(Player.main.transform.position, key.transform.position) <= range.Value)
                     {
                         total += cachedContainers[key].GetCount(techType);
                     }
@@ -164,7 +163,7 @@ namespace CraftFromContainers
         {
             private static void Postfix(Inventory __instance, TechType destroyTechType, ref bool __result)
             {
-                if (__result || __instance != Inventory.main)
+                if (__result || !GameModeUtils.RequiresIngredients() || __instance != Inventory.main)
                     return;
                 foreach (var key in cachedContainers.Keys.ToArray())
                 {

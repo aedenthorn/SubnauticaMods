@@ -31,6 +31,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickBatterySwitch", "Quick
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimplePosters", "SimplePosters\SimplePosters.csproj", "{6789104D-FB04-41FD-83FB-793C9E8F7640}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CraftFromRawIngredients", "CraftFromRawIngredients\CraftFromRawIngredients.csproj", "{CBB95630-D846-41E0-B44C-341EF9F23C5D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -93,6 +95,10 @@ Global
 		{6789104D-FB04-41FD-83FB-793C9E8F7640}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6789104D-FB04-41FD-83FB-793C9E8F7640}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6789104D-FB04-41FD-83FB-793C9E8F7640}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CBB95630-D846-41E0-B44C-341EF9F23C5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBB95630-D846-41E0-B44C-341EF9F23C5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBB95630-D846-41E0-B44C-341EF9F23C5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBB95630-D846-41E0-B44C-341EF9F23C5D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
