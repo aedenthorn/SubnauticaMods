@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimplePosters", "SimplePost
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CraftFromRawMaterials", "CraftFromRawMaterials\CraftFromRawMaterials.csproj", "{392619E7-EE5C-4F8A-8407-4F624E2232F3}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MobileResourceScanner", "MobileResourceScanner\MobileResourceScanner.csproj", "{061D79A2-B50F-4F37-AC4D-8C78E8D10C1D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,10 @@ Global
 		{392619E7-EE5C-4F8A-8407-4F624E2232F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{392619E7-EE5C-4F8A-8407-4F624E2232F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{392619E7-EE5C-4F8A-8407-4F624E2232F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{061D79A2-B50F-4F37-AC4D-8C78E8D10C1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{061D79A2-B50F-4F37-AC4D-8C78E8D10C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{061D79A2-B50F-4F37-AC4D-8C78E8D10C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{061D79A2-B50F-4F37-AC4D-8C78E8D10C1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

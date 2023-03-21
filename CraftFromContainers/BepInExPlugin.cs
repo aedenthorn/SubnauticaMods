@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.3.2")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.3.3")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -68,8 +68,8 @@ namespace CraftFromContainers
             {
                 if (!modEnabled.Value)
                     return;
-                CheckStorageType(__instance);
-                cachedContainers[__instance.storageRoot] = __instance.container;
+                if(CheckStorageType(__instance))
+                    cachedContainers[__instance.storageRoot] = __instance.container;
             }
 
         }
@@ -81,8 +81,8 @@ namespace CraftFromContainers
             {
                 if (!modEnabled.Value)
                     return;
-                CheckStorageType(__instance);
-                cachedContainers[__instance.storageRoot] = __instance.container;
+                if (CheckStorageType(__instance))
+                    cachedContainers[__instance.storageRoot] = __instance.container;
             }
         }
 
