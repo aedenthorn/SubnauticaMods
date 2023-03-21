@@ -17,7 +17,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace MobileResourceScanner
 {
-    [BepInPlugin("aedenthorn.MobileResourceScanner", "Mobile Resource Scanner", "0.1.0")]
+    [BepInPlugin("aedenthorn.MobileResourceScanner", "Mobile Resource Scanner", "0.1.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -236,6 +236,9 @@ namespace MobileResourceScanner
             Dbgl("Added scroll view");
 
             var gridGO = Instantiate(template.gameObject, mask.transform);
+            var header = gridGO.transform.Find("Header");
+            var rth = header.GetComponent<RectTransform>();
+
             var rtg = gridGO.GetComponent<RectTransform>();
             sr.content = rtg;
 
@@ -285,14 +288,13 @@ namespace MobileResourceScanner
             rtb.localScale = Vector3.one;
             rtb.anchoredPosition3D = Vector3.zero;
 
-            var header = gridGO.transform.Find("Header");
-            var rth = header.GetComponent<RectTransform>();
-            Vector2 size = rth.sizeDelta;
+
             header.SetParent(menuGO.transform);
-            rth.anchoredPosition = new Vector2(272.5f, 0);
-            rth.sizeDelta = size;
+            rth.anchoredPosition = new Vector2(272.5f, 700);
+            rth.sizeDelta = new Vector2(545f, 100);
             var headerText = header.GetComponent<TextMeshProUGUI>();
             headerText.text = menuHeader.Value;
+            Dbgl($"Header size: {rth.sizeDelta}");
 
             foreach (var t in techs)
             {

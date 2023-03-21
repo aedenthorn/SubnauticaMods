@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace AutoHarvest
 {
-    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.4.0")]
+    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.4.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -35,8 +35,8 @@ namespace AutoHarvest
 
         public static string[] allowedTypes = new string[0];
         public static string[] forbiddenTypes = new string[0];
-        private static string allowedFile = "allowed_types.txt";
-        private static string forbiddenFile = "forbidden_types.txt";
+        public static string allowedFile = "allowed_types.txt";
+        public static string forbiddenFile = "forbidden_types.txt";
         
         private static FieldInfo inventoryItemField = AccessTools.Field(typeof(Pickupable), "inventoryItem");
 
@@ -111,7 +111,6 @@ namespace AutoHarvest
             {
                 Directory.CreateDirectory(folder);
                 allowedTypes = Enum.GetNames(typeof(TechType));
-                File.Create(f);
                 File.WriteAllLines(a, allowedTypes);
                 File.WriteAllLines(f, forbiddenTypes);
             }
