@@ -19,7 +19,7 @@ namespace MobileResourceScanner
         }
         public void Close()
         {
-            BepInExPlugin.Dbgl("Closing menu");
+            //BepInExPlugin.Dbgl("Closing menu");
             Deselect();
             Destroy(BepInExPlugin.menuGO);
         }
@@ -31,7 +31,7 @@ namespace MobileResourceScanner
         }
         protected override void OnDisable()
         {
-            BepInExPlugin.Dbgl("Disabling menu");
+            //BepInExPlugin.Dbgl("Disabling menu");
             base.OnDisable();
             uGUI_LegendBar.ClearButtons();
             Destroy(BepInExPlugin.menuGO);
@@ -45,7 +45,7 @@ namespace MobileResourceScanner
         }
         public override void OnDeselect()
         {
-            BepInExPlugin.Dbgl("Deselecting menu");
+            //BepInExPlugin.Dbgl("Deselecting menu");
             base.OnDeselect();
             //FreezeTime.End(FreezeTime.Id.IngameMenu);
             Destroy(BepInExPlugin.menuGO);

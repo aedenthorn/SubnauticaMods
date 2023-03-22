@@ -12,12 +12,13 @@ using System.Reflection.Emit;
 using System.Text;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Image = UnityEngine.UI.Image;
 
 namespace MobileResourceScanner
 {
-    [BepInPlugin("aedenthorn.MobileResourceScanner", "Mobile Resource Scanner", "0.1.1")]
+    [BepInPlugin("aedenthorn.MobileResourceScanner", "Mobile Resource Scanner", "0.2.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -36,6 +37,7 @@ namespace MobileResourceScanner
         public static ConfigEntry<string> ingredients;
         public static ConfigEntry<string> openMenuString;
         public static ConfigEntry<CraftTree.Type> fabricatorType;
+        public static ConfigEntry<KeyboardShortcut> menuHotkey;
         
         public static bool intervalChanged = true;
 
@@ -65,6 +67,7 @@ namespace MobileResourceScanner
             currentResource = Config.Bind<string>("Options", "CurrentResource", "None", "Current resource type to scan for");
             ingredients = Config.Bind<string>("Options", "Ingredients", "ComputerChip:1,Magnetite:1", "Required ingredients, comma separated TechType:Amount pairs");
             fabricatorType = Config.Bind<CraftTree.Type>("Options", "FabricatorType", CraftTree.Type.MapRoom, "Fabricator to use to craft the chip.");
+            menuHotkey = Config.Bind<KeyboardShortcut>("Options", "MenuHotkey", new KeyboardShortcut(KeyCode.L, new KeyCode[] { KeyCode.LeftShift}), "Key shortcut used to open the menu.");
 
             nameString = Config.Bind<string>("Text", "NameString", "Mobile Resource Scanner", "Display name");
             descriptionString = Config.Bind<string>("Text", "DescriptionString", "Equip to enable mobile resource scanning", "Display description");
@@ -81,6 +84,14 @@ namespace MobileResourceScanner
             StartCoroutine(LoadChip());
 
             Dbgl("Plugin awake");
+        }
+
+        public void Update()
+        {
+            if (modEnabled.Value && menuHotkey.Value.IsDown())
+            {
+                ShowMenu();
+            }
         }
 
         private void Interval_SettingChanged(object sender, System.EventArgs e)
@@ -260,6 +271,7 @@ namespace MobileResourceScanner
                 if (first)
                 {
                     templateButton = button;
+                    Destroy(templateButton.gameObject.GetComponent<EventTrigger>());
                     first = false;
                 }
                 else Destroy(button.gameObject);
