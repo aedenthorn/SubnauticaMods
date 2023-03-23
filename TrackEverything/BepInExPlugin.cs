@@ -2,20 +2,11 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using SMLHelper.V2.Crafting;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Text;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
-using static VFXParticlesPool;
-using Image = UnityEngine.UI.Image;
 
 namespace TrackEverything
 {
