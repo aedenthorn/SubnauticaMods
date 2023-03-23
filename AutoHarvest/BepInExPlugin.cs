@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace AutoHarvest
 {
-    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.4.1")]
+    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.4.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -207,7 +207,7 @@ namespace AutoHarvest
         private static void Pickup(Pickupable pickupable)
         {
             var ii = (InventoryItem)inventoryItemField.GetValue(pickupable);
-            if ((ii == null || ii.container == null) && pickupable.isPickupable && (!preventPickingUpDropped.Value || AccessTools.FieldRefAccess<Pickupable, float>(pickupable, "timeDropped") == 0) && Player.main.HasInventoryRoom(pickupable) && IsAllowed(pickupable.gameObject))
+            if ((ii == null || ii.container == null) && pickupable.GetComponent<PlaceTool>() == null && pickupable.isPickupable && (!preventPickingUpDropped.Value || AccessTools.FieldRefAccess<Pickupable, float>(pickupable, "timeDropped") == 0) && Player.main.HasInventoryRoom(pickupable) && IsAllowed(pickupable.gameObject))
             {
                 //Debug.Log("Picking up " + pickupable.GetTechName());
 

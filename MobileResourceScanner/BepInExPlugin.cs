@@ -18,7 +18,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace MobileResourceScanner
 {
-    [BepInPlugin("aedenthorn.MobileResourceScanner", "Mobile Resource Scanner", "0.2.1")]
+    [BepInPlugin("aedenthorn.MobileResourceScanner", "Mobile Resource Scanner", "0.2.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -156,8 +156,8 @@ namespace MobileResourceScanner
             return Inventory.main.equipment.GetCount(chipTechType);
         }
 
-        [HarmonyPatch(typeof(uGUI_ResourceTracker), "GatherScanned")]
-        private static class uGUI_ResourceTracker_GatherScanned_Patch
+        [HarmonyPatch(typeof(uGUI_ResourceTracker), "GatherNodes")]
+        private static class uGUI_ResourceTracker_GatherNodes_Patch
         {
             static bool Prefix(uGUI_ResourceTracker __instance, HashSet<ResourceTrackerDatabase.ResourceInfo> ___nodes, List<TechType> ___techTypes)
             {

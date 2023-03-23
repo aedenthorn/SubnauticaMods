@@ -8,13 +8,14 @@ using UnityEngine;
 
 namespace CraftFromRawMaterials
 {
-    [BepInPlugin("aedenthorn.CraftFromRawMaterials", "Craft From Raw Materials", "0.1.0")]
+    [BepInPlugin("aedenthorn.CraftFromRawMaterials", "Craft From Raw Materials", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
+        public static ConfigEntry<bool> rawByDefault;
         public static ConfigEntry<KeyboardShortcut> modKey;
         public static ConfigEntry<KeyboardShortcut> modKeyIgnore;
 
@@ -29,6 +30,7 @@ namespace CraftFromRawMaterials
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
+            rawByDefault = Config.Bind<bool>("Options", "RawByDefault", false, "Reverse ModKey behaviour");
             modKey = Config.Bind<KeyboardShortcut>("Options", "ModKey", new KeyboardShortcut(KeyCode.LeftShift), "Key to hold to enable mod");
             modKeyIgnore = Config.Bind<KeyboardShortcut>("Options", "ModKeyIgnore", new KeyboardShortcut(KeyCode.LeftControl), "Key to hold to ignore products you have in inventory");
 
@@ -40,11 +42,11 @@ namespace CraftFromRawMaterials
         [HarmonyPatch(typeof(uGUI_CraftingMenu), "UpdateVisuals")]
         private static class uGUI_CraftingMenu_UpdateVisuals_Patch
         {
-            static void Prefix(uGUI_CraftingMenu __instance, ref bool ___resync, ref bool ___isDirty)
+            static void Prefix(uGUI_CraftingMenu __instance, ref bool ___isDirty)
             {
                 if(!modEnabled.Value || (!modKey.Value.IsDown() && !modKeyIgnore.Value.IsDown() && !modKey.Value.IsUp() && !modKeyIgnore.Value.IsUp()))
                     return;
-                ___resync = true;
+                ___isDirty = true;
             }
         }
 
@@ -53,7 +55,7 @@ namespace CraftFromRawMaterials
         {
             static void Postfix(ref ITechData __result)
             {
-                if (!modEnabled.Value || (!modKey.Value.IsPressed() && !modKeyIgnore.Value.IsPressed()) || __result is null || __result.ingredientCount == 0)
+                if (!modEnabled.Value || (modKey.Value.IsPressed() == rawByDefault.Value && !modKeyIgnore.Value.IsPressed()) || __result is null || __result.ingredientCount == 0)
                     return;
                 MyTechData data = new MyTechData(__result);
                 var ingList = GetIngredients(__result, 1);
