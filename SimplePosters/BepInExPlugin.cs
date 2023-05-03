@@ -16,7 +16,7 @@ using UnityEngine.Networking;
 
 namespace SimplePosters
 {
-    [BepInPlugin("aedenthorn.SimplePosters", "Simple Posters", "0.2.0")]
+    [BepInPlugin("aedenthorn.SimplePosters", "Simple Posters", "0.3.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -75,21 +75,74 @@ namespace SimplePosters
             yield return request;
             PosterItem.prefab = request.GetResult();
 
-            List<string> uniques = new List<string>();
-            var files = Directory.GetFiles(AedenthornUtils.GetAssetPath(context, true), "*.*", SearchOption.AllDirectories);
             CraftTreeHandler.AddTabNode(CraftTree.Type.Fabricator, "SimplePosters", "Posters", SpriteManager.Get(iconTechType.Value));
-            if (files.Count() > postersPerPage.Value)
+            
+            List<string> uniques = new List<string>();
+            string root = AedenthornUtils.GetAssetPath(context, true);
+            int rootPaths = root.Split(Path.DirectorySeparatorChar).Length;
+            var all = Directory.GetFiles(root, "*.*", SearchOption.AllDirectories);
+            var unsorted = new List<string>();
+            var sorted = new Dictionary<string, List<string>>();
+            foreach(var s in all)
             {
-                int pages = (int)Mathf.Ceil(files.Count() / (float)postersPerPage.Value);
+                var split = s.Split(Path.DirectorySeparatorChar).Skip(rootPaths);
+                if (split.Count() > 1 && (!split.First().EndsWith("x") || !float.TryParse(split.First().Substring(0, split.First().Length - 1), NumberStyles.Any, CultureInfo.InvariantCulture, out float f)))
+                {
+                    List<string> list;
+                    if(!sorted.TryGetValue(split.First(), out list))
+                    {
+                        list = new List<string>();
+                        sorted.Add(split.First(), list);
+                    }
+                    list.Add(s);
+                }
+                else
+                {
+                    unsorted.Add(s);
+                }
+            }
+            Dbgl($"{sorted.Count} sorted");
+
+            foreach (var kvp in sorted)
+            {
+                CraftTreeHandler.AddTabNode(CraftTree.Type.Fabricator, kvp.Key, kvp.Key, SpriteManager.Get(iconTechType.Value), new string[] { "SimplePosters", kvp.Key });
+                foreach(var path in kvp.Value)
+                {
+                    if (!path.EndsWith(".png") && !path.EndsWith(".jpg") && !path.EndsWith(".gif") && !path.EndsWith(".jpeg"))
+                        continue;
+                    var name = Path.GetFileNameWithoutExtension(path);
+                    if (uniques.Contains(name))
+                        continue;
+                    CoroutineTask<Texture2D> r = GetImageAsync(path, name);
+                    yield return r;
+                    var tex = r.GetResult();
+                    if (tex == null)
+                        continue;
+                    float scale = GetScaleFromPath(path);
+                    try
+                    {
+                        var poster = new PosterItem(tex, scale, $"SimplePosters{name.Replace(" ", "")}", name, posterDescription.Value, new string[] { "SimplePosters", kvp.Key }); // Create an instance of your class
+                        poster.Patch(); // Call the Patch method
+                        Dbgl($"Added poster {name}");
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }
+            if (unsorted.Count() > postersPerPage.Value)
+            {
+                int pages = (int)Mathf.Ceil(unsorted.Count() / (float)postersPerPage.Value);
                 for (int i = 1; i <= pages; i++)
                 {
                     CraftTreeHandler.AddTabNode(CraftTree.Type.Fabricator, i + "", $"Page {i}", SpriteManager.Get(iconTechType.Value), new string[] { "SimplePosters" });
                 }
             }
 
-            for (int i = 0; i < files.Count(); i++)
+            for (int i = 0; i < unsorted.Count(); i++)
             {
-                var path = files[i];
+                var path = unsorted[i];
                 if (!path.EndsWith(".png") && !path.EndsWith(".jpg") && !path.EndsWith(".gif") && !path.EndsWith(".jpeg"))
                     continue;
                 var name = Path.GetFileNameWithoutExtension(path);
@@ -102,7 +155,7 @@ namespace SimplePosters
                     continue;
                 float scale = GetScaleFromPath(path);
                 int page = (i / postersPerPage.Value) + 1;
-                var strings = files.Count() <= postersPerPage.Value ? new string[] { "SimplePosters" } : new string[] { "SimplePosters", page + "" };
+                var strings = unsorted.Count() <= postersPerPage.Value ? new string[] { "SimplePosters" } : new string[] { "SimplePosters", page + "" };
                 try
                 {
                     var poster = new PosterItem(tex, scale, $"SimplePosters{name.Replace(" ", "")}", name, posterDescription.Value, strings); // Create an instance of your class
