@@ -13,7 +13,7 @@ using static HandReticle;
 
 namespace PrawnTopographicMap
 {
-    [BepInPlugin("aedenthorn.PrawnTopographicMap", "Prawn Topographic Map", "0.1.1")]
+    [BepInPlugin("aedenthorn.PrawnTopographicMap", "Prawn Topographic Map", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -21,6 +21,7 @@ namespace PrawnTopographicMap
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
         public static ConfigEntry<Vector3> mapPosition;
+        public static ConfigEntry<GameInput.Button> button;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -34,6 +35,7 @@ namespace PrawnTopographicMap
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
             mapPosition = Config.Bind<Vector3>("Options", "MapPosition", new Vector3(0, -0.4f, 0.6f), "Map position");
+            button = Config.Bind<GameInput.Button>("Options", "ToggleButton", GameInput.Button.AltTool, "Button to toggle map");
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");

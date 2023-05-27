@@ -28,7 +28,7 @@ namespace PrawnTopographicMap
             {
                 miniWorld.active = false;
             }
-            else if (GameInput.GetButtonDown(GameInput.Button.AltTool))
+            else if (GameInput.GetButtonDown(BepInExPlugin.button.Value))
             {
                 miniWorld.active = !miniWorld.active;
             }
