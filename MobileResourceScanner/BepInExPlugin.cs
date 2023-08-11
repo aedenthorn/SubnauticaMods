@@ -18,7 +18,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace MobileResourceScanner
 {
-    [BepInPlugin("aedenthorn.MobileResourceScanner", "Mobile Resource Scanner", "0.2.2")]
+    [BepInPlugin("aedenthorn.MobileResourceScanner", "Mobile Resource Scanner", "0.2.3")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -161,7 +161,7 @@ namespace MobileResourceScanner
         {
             static bool Prefix(uGUI_ResourceTracker __instance, HashSet<ResourceTrackerDatabase.ResourceInfo> ___nodes, List<TechType> ___techTypes)
             {
-                if (!modEnabled.Value || currentTechType == TechType.None || Inventory.main.equipment.GetCount(chipTechType) == 0)
+                if (!modEnabled.Value || currentTechType == TechType.None || Inventory.main?.equipment?.GetCount(chipTechType) == 0)
                     return true;
 
                 Camera camera = MainCamera.camera;

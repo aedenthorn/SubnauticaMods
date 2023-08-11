@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DeveloperMenu
 {
-    [BepInPlugin("aedenthorn.DeveloperMenu", "DeveloperMenu", "0.3.1")]
+    [BepInPlugin("aedenthorn.DeveloperMenu", "DeveloperMenu", "0.4.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -44,19 +44,32 @@ namespace DeveloperMenu
             Dbgl("Plugin awake");
 
         }
+        public void Update()
+        {
+            if (modEnabled.Value && hotKey.Value.IsDown())
+            {
+                developerModeEnabled.Value = !developerModeEnabled.Value;
+                Dbgl($"Developer mode enabled: {developerModeEnabled.Value}");
+            }
+        }
         [HarmonyPatch(typeof(GameInput), nameof(GameInput.GetEnableDeveloperMode))]
         private static class GameInput_GetEnableDeveloperMode_Patch
         {
             static void Postfix(GameInput __instance, ref bool __result)
             {
+                if (modEnabled.Value)
+                    __result = developerModeEnabled.Value;
+            }
+        }
+        [HarmonyPatch(typeof(IngameMenu), "Update")]
+        private static class IngameMenu_Update_Patch
+        {
+            static void Prefix(IngameMenu __instance, ref bool ___developerMode)
+            {
                 if (!modEnabled.Value)
                     return;
-                if (hotKey.Value.IsDown())
-                {
-                    developerModeEnabled.Value = !developerModeEnabled.Value;
-                    Dbgl($"Developer mode enabled: {developerModeEnabled.Value}");
-                }
-                __result = developerModeEnabled.Value;
+                ___developerMode = developerModeEnabled.Value;
+                __instance.developerButton.gameObject.SetActive(___developerMode);
             }
         }
         [HarmonyPatch(typeof(PlatformUtils), nameof(PlatformUtils.GetDevToolsEnabled))]
