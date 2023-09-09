@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "QuickStore", "0.2.1")]
+    [BepInPlugin("aedenthorn.QuickStore", "QuickStore", "0.2.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -145,11 +145,11 @@ namespace QuickStore
         private static bool IsAllowed(TechType type)
         {
             string ts = type.ToString();
-            if (forbiddenTypes.Length > 0 && Array.IndexOf(forbiddenTypes, ts) < 0)
+            if (forbiddenTypes.Length > 0 && Array.IndexOf(forbiddenTypes, ts) >= 0)
             {
                 return false;
             }
-            return allowedTypes.Length > 0 && Array.IndexOf(allowedTypes, ts) >= 0;
+            return allowedTypes.Length == 0 || Array.IndexOf(allowedTypes, ts) >= 0;
         }
 
         [HarmonyPatch(typeof(uGUI_ItemsContainer), nameof(uGUI_ItemsContainer.DoUpdate))]
