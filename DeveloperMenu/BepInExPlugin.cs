@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DeveloperMenu
 {
-    [BepInPlugin("aedenthorn.DeveloperMenu", "DeveloperMenu", "0.4.0")]
+    [BepInPlugin("aedenthorn.DeveloperMenu", "DeveloperMenu", "0.5.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -21,7 +21,7 @@ namespace DeveloperMenu
         public static ConfigEntry<bool> developerModeEnabled;
         public static ConfigEntry<float> range;
         public static ConfigEntry<string> spawnTabLabel;
-        public static ConfigEntry<KeyboardShortcut> hotKey;
+        public static ConfigEntry<KeyCode> toggleKey;
         public static ConfigEntry<KeyCode> ingredientsModKey;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
@@ -36,7 +36,7 @@ namespace DeveloperMenu
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
             developerModeEnabled = Config.Bind<bool>("Options", "DeveloperModeEnabled", false, "Whether developer mode is enabled");
-            hotKey = Config.Bind<KeyboardShortcut>("Options", "HotKey", new KeyboardShortcut(KeyCode.Backslash), "Key to press to toggle developer menu.");
+            toggleKey = Config.Bind<KeyCode>("Options", "ToggleKey", KeyCode.Backslash, "Key to press to toggle developer menu.");
             ingredientsModKey = Config.Bind<KeyCode>("Options", "IngredientsModKey", KeyCode.LeftShift, "Key to hold when pressing give button to give ingredients instead.");
             spawnTabLabel = Config.Bind<string>("Options", "SpawnTabLabel", "Spawn", "Spawn tab label.");
 
@@ -46,7 +46,7 @@ namespace DeveloperMenu
         }
         public void Update()
         {
-            if (modEnabled.Value && hotKey.Value.IsDown())
+            if (modEnabled.Value && Input.GetKeyDown(toggleKey.Value))
             {
                 developerModeEnabled.Value = !developerModeEnabled.Value;
                 Dbgl($"Developer mode enabled: {developerModeEnabled.Value}");

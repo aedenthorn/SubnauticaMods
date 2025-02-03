@@ -2,28 +2,22 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using Nautilus.Handlers;
+using SMLHelper.V2.Crafting;
+using SMLHelper.V2.Handlers;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System;
 using System.Reflection;
-using static CraftData;
 using UnityEngine;
-using System.Collections;
 using UnityEngine.Networking;
-using Nautilus.Assets;
-using Valve.VR;
-using Nautilus.Assets.PrefabTemplates;
-using Nautilus.Crafting;
-using Nautilus.Assets.Gadgets;
 
 namespace SimplePosters
 {
-    [BepInPlugin("aedenthorn.SimplePosters", "Simple Posters", "1.0.0")]
-    [BepInDependency("com.snmodding.nautilus")]
-    public class BepInExPlugin : BaseUnityPlugin
+    [BepInPlugin("aedenthorn.SimplePosters", "Simple Posters", "0.3.1")]
+    public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
@@ -42,8 +36,6 @@ namespace SimplePosters
             if (isDebug.Value)
                 context.Logger.Log(logLevel, str);
         }
-        private static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
-
         private void Awake()
         {
 
@@ -56,18 +48,16 @@ namespace SimplePosters
             craftTimeMult = Config.Bind<float>("Options", "CraftTimeMult", 1f, "Craft time multiplier.");
             postersPerPage = Config.Bind<int>("Options", "PostersPerPage", 100, "Posters per page.");
 
-            // Initialize custom prefabs
-            StartCoroutine(InitializePrefabs());
-
-            // register harmony patches, if there are any
-            Harmony.CreateAndPatchAll(Assembly, $"{Info.Metadata.GUID}");
+            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), Info.Metadata.GUID);
+            Dbgl("Plugin awake");
+            StartCoroutine(LoadPosters());
         }
 
-        private IEnumerator InitializePrefabs()
+        private static IEnumerator LoadPosters()
         {
             Dbgl($"Adding posters");
 
-            var ingredientList = new List<Ingredient>();
+            PosterItem.ingredientList = new List<Ingredient>();
 
             foreach (var str in ingredients.Value.Split(','))
             {
@@ -78,24 +68,28 @@ namespace SimplePosters
                     continue;
                 if (!Enum.TryParse<TechType>(split[0], out var tech))
                     continue;
-                ingredientList.Add(new Ingredient(tech, amount));
+                PosterItem.ingredientList.Add(new Ingredient(tech, amount));
             }
 
-            CraftTreeHandler.AddTabNode(CraftTree.Type.Fabricator, "SimplePosters", "Posters", SpriteManager.Get(iconTechType.Value));
+            CoroutineTask<GameObject> request = CraftData.GetPrefabForTechTypeAsync(TechType.PosterAurora, false);
+            yield return request;
+            PosterItem.prefab = request.GetResult();
 
+            CraftTreeHandler.AddTabNode(CraftTree.Type.Fabricator, "SimplePosters", "Posters", SpriteManager.Get(iconTechType.Value));
+            
             List<string> uniques = new List<string>();
             string root = AedenthornUtils.GetAssetPath(context, true);
             int rootPaths = root.Split(Path.DirectorySeparatorChar).Length;
             var all = Directory.GetFiles(root, "*.*", SearchOption.AllDirectories);
             var unsorted = new List<string>();
             var sorted = new Dictionary<string, List<string>>();
-            foreach (var s in all)
+            foreach(var s in all)
             {
                 var split = s.Split(Path.DirectorySeparatorChar).Skip(rootPaths);
                 if (split.Count() > 1 && (!split.First().EndsWith("x") || !float.TryParse(split.First().Substring(0, split.First().Length - 1), NumberStyles.Any, CultureInfo.InvariantCulture, out float f)))
                 {
                     List<string> list;
-                    if (!sorted.TryGetValue(split.First(), out list))
+                    if(!sorted.TryGetValue(split.First(), out list))
                     {
                         list = new List<string>();
                         sorted.Add(split.First(), list);
@@ -112,7 +106,7 @@ namespace SimplePosters
             foreach (var kvp in sorted)
             {
                 CraftTreeHandler.AddTabNode(CraftTree.Type.Fabricator, kvp.Key, kvp.Key, SpriteManager.Get(iconTechType.Value), new string[] { "SimplePosters", kvp.Key });
-                foreach (var path in kvp.Value)
+                foreach(var path in kvp.Value)
                 {
                     if (!path.EndsWith(".png") && !path.EndsWith(".jpg") && !path.EndsWith(".gif") && !path.EndsWith(".jpeg"))
                         continue;
@@ -127,49 +121,8 @@ namespace SimplePosters
                     float scale = GetScaleFromPath(path);
                     try
                     {
-                        PrefabInfo Info = PrefabInfo
-                            .WithTechType($"SimplePosters{name.Replace(" ", "")}", name, posterDescription.Value)
-                            .WithIcon(Sprite.Create(tex, new Rect(0,0,tex.width, tex.height), Vector2.zero));
-
-                        CustomPrefab customPrefab = new CustomPrefab(Info);
-                        var posterObj = new CloneTemplate(Info, TechType.PosterAurora);
-
-                        posterObj.ModifyPrefab += go =>
-                        {
-                            go.name = name;
-                            var mr = go.GetComponentInChildren<MeshRenderer>();
-                            var oldTex = mr.materials[1].GetTexture("_MainTex");
-                            var oldSize = new Vector2(oldTex.width, oldTex.height);
-                            var newSize = new Vector2(tex.width, tex.height);
-                            float ratio1 = oldSize.x / oldSize.y;
-                            float ratio2 = newSize.x / newSize.y;
-                            float xScale = 1;
-                            float yScale = 1;
-                            if (ratio2 < ratio1)
-                            {
-                                yScale *= ratio1 / ratio2;
-                                if (yScale > 1.5f)
-                                {
-                                    xScale /= yScale / 1.5f;
-                                    yScale = 1.5f;
-                                }
-                            }
-                            else if (ratio1 < ratio2)
-                            {
-                                xScale *= ratio2 / ratio1;
-                            }
-
-                            mr.transform.localScale = new Vector3(xScale, 1, yScale) * scale;
-                            mr.materials[1].SetTexture("_MainTex", tex);
-                            mr.materials[1].SetTexture("_SpecTex", tex);
-                        };
-                        customPrefab.SetGameObject(posterObj);
-                        customPrefab.SetRecipe(new RecipeData(ingredientList))
-                            .WithFabricatorType(CraftTree.Type.Fabricator)
-                            .WithStepsToFabricatorTab(new string[] { "SimplePosters", kvp.Key })
-                            .WithCraftingTime(craftTimeMult.Value);
-                        customPrefab.SetEquipment(EquipmentType.Hand);
-                        customPrefab.Register();
+                        var poster = new PosterItem(tex, scale, $"SimplePosters{name.Replace(" ", "")}", name, posterDescription.Value, new string[] { "SimplePosters", kvp.Key }); // Create an instance of your class
+                        poster.Patch(); // Call the Patch method
                         Dbgl($"Added poster {name}");
                     }
                     catch
@@ -205,49 +158,8 @@ namespace SimplePosters
                 var strings = unsorted.Count() <= postersPerPage.Value ? new string[] { "SimplePosters" } : new string[] { "SimplePosters", page + "" };
                 try
                 {
-                    PrefabInfo Info = PrefabInfo
-                            .WithTechType($"SimplePosters{name.Replace(" ", "")}", name, posterDescription.Value)
-                            .WithIcon(Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), Vector2.zero));
-
-                    CustomPrefab customPrefab = new CustomPrefab(Info);
-                    var posterObj = new CloneTemplate(Info, TechType.PosterAurora);
-
-                    posterObj.ModifyPrefab += go =>
-                    {
-                        go.name = name;
-                        var mr = go.GetComponentInChildren<MeshRenderer>();
-                        var oldTex = mr.materials[1].GetTexture("_MainTex");
-                        var oldSize = new Vector2(oldTex.width, oldTex.height);
-                        var newSize = new Vector2(tex.width, tex.height);
-                        float ratio1 = oldSize.x / oldSize.y;
-                        float ratio2 = newSize.x / newSize.y;
-                        float xScale = 1;
-                        float yScale = 1;
-                        if (ratio2 < ratio1)
-                        {
-                            yScale *= ratio1 / ratio2;
-                            if (yScale > 1.5f)
-                            {
-                                xScale /= yScale / 1.5f;
-                                yScale = 1.5f;
-                            }
-                        }
-                        else if (ratio1 < ratio2)
-                        {
-                            xScale *= ratio2 / ratio1;
-                        }
-
-                        mr.transform.localScale = new Vector3(xScale, 1, yScale) * scale;
-                        mr.materials[1].SetTexture("_MainTex", tex);
-                        mr.materials[1].SetTexture("_SpecTex", tex);
-                    };
-                    customPrefab.SetGameObject(posterObj);
-                    customPrefab.SetRecipe(new RecipeData(ingredientList))
-                        .WithFabricatorType(CraftTree.Type.Fabricator)
-                        .WithStepsToFabricatorTab(strings)
-                        .WithCraftingTime(craftTimeMult.Value);
-                    customPrefab.SetEquipment(EquipmentType.Hand);
-                    customPrefab.Register();
+                    var poster = new PosterItem(tex, scale, $"SimplePosters{name.Replace(" ", "")}", name, posterDescription.Value, strings); // Create an instance of your class
+                    poster.Patch(); // Call the Patch method
                     Dbgl($"Added poster {name}");
                 }
                 catch
@@ -255,9 +167,8 @@ namespace SimplePosters
 
                 }
             }
-
+            yield break;
         }
-
 
         private static float GetScaleFromPath(string path)
         {

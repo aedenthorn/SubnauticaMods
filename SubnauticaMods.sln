@@ -29,13 +29,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageReplace", "ImageReplac
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickBatterySwitch", "QuickBatterySwitch\QuickBatterySwitch.csproj", "{0885860A-E291-42A5-B8F8-BA0015E376CF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimplePosters", "SimplePosters\SimplePosters.csproj", "{6789104D-FB04-41FD-83FB-793C9E8F7640}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CraftFromRawMaterials", "CraftFromRawMaterials\CraftFromRawMaterials.csproj", "{392619E7-EE5C-4F8A-8407-4F624E2232F3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MobileResourceScanner", "MobileResourceScanner\MobileResourceScanner.csproj", "{061D79A2-B50F-4F37-AC4D-8C78E8D10C1D}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrackEverything", "TrackEverything\TrackEverything.csproj", "{65F2523F-16E9-4BFE-8D54-8D4611B16489}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalResourceScanner", "PersonalResourceScanner\PersonalResourceScanner.csproj", "{10F4DB79-3248-428E-83C7-A5CCB45744BB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8FCF3F1F-0545-4C50-9E81-19BB2A65C8B3}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimplePosters", "SimplePosters\SimplePosters.csproj", "{C55CF1A6-71B1-4354-8A1F-210C777AFCCB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{18A3B92E-0F87-4AD7-9754-F256B6691282} = {18A3B92E-0F87-4AD7-9754-F256B6691282}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -95,22 +103,22 @@ Global
 		{0885860A-E291-42A5-B8F8-BA0015E376CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0885860A-E291-42A5-B8F8-BA0015E376CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0885860A-E291-42A5-B8F8-BA0015E376CF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6789104D-FB04-41FD-83FB-793C9E8F7640}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6789104D-FB04-41FD-83FB-793C9E8F7640}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6789104D-FB04-41FD-83FB-793C9E8F7640}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6789104D-FB04-41FD-83FB-793C9E8F7640}.Release|Any CPU.Build.0 = Release|Any CPU
 		{392619E7-EE5C-4F8A-8407-4F624E2232F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{392619E7-EE5C-4F8A-8407-4F624E2232F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{392619E7-EE5C-4F8A-8407-4F624E2232F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{392619E7-EE5C-4F8A-8407-4F624E2232F3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{061D79A2-B50F-4F37-AC4D-8C78E8D10C1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{061D79A2-B50F-4F37-AC4D-8C78E8D10C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{061D79A2-B50F-4F37-AC4D-8C78E8D10C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{061D79A2-B50F-4F37-AC4D-8C78E8D10C1D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{65F2523F-16E9-4BFE-8D54-8D4611B16489}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{65F2523F-16E9-4BFE-8D54-8D4611B16489}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65F2523F-16E9-4BFE-8D54-8D4611B16489}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65F2523F-16E9-4BFE-8D54-8D4611B16489}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10F4DB79-3248-428E-83C7-A5CCB45744BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10F4DB79-3248-428E-83C7-A5CCB45744BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10F4DB79-3248-428E-83C7-A5CCB45744BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10F4DB79-3248-428E-83C7-A5CCB45744BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C55CF1A6-71B1-4354-8A1F-210C777AFCCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C55CF1A6-71B1-4354-8A1F-210C777AFCCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C55CF1A6-71B1-4354-8A1F-210C777AFCCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C55CF1A6-71B1-4354-8A1F-210C777AFCCB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
