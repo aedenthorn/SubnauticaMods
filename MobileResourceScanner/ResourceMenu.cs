@@ -29,7 +29,7 @@ namespace MobileResourceScanner
             uGUI_LegendBar.ChangeButton(0, uGUI.FormatButton(GameInput.Button.UICancel, false, " / ", true), Language.main.GetFormat("Back"));
             uGUI_LegendBar.ChangeButton(1, uGUI.FormatButton(GameInput.Button.UISubmit, false, " / ", true), Language.main.GetFormat("ItemSelectorSelect"));
         }
-        protected override void OnDisable()
+        public override void OnDisable()
         {
             //BepInExPlugin.Dbgl("Disabling menu");
             base.OnDisable();

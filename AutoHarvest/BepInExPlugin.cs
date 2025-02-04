@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace AutoHarvest
 {
-    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.4.2")]
+    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.5.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -102,7 +102,7 @@ namespace AutoHarvest
         {
             if (!modEnabled.Value)
                 return;
-            forbiddenTypes = new string[] { "MapRoomCamera" };
+            forbiddenTypes = new string[] { "MapRoomCamera", "SmallStorage", "Gravsphere" };
             allowedTypes = new string[0];
             string folder = AedenthornUtils.GetAssetPath(context, false);
             string f = Path.Combine(folder, forbiddenFile);
@@ -128,6 +128,8 @@ namespace AutoHarvest
             if(!modEnabled.Value || Player.main == null || Player.main.transform == null)
                 return;
             Collider[] colliders = Physics.OverlapSphere(Player.main.transform.position, range.Value);
+            if (!Player.main.HasInventoryRoom(1, 1))
+                return;
             //Collider[] colliders = new Collider[maxHarvest.Value];
             //Physics.OverlapSphereNonAlloc(Player.main.transform.position, 100, colliders);
 
@@ -227,11 +229,11 @@ namespace AutoHarvest
 
         private static bool IsAllowed(GameObject go)
         {
-            if (!allowPickupCreature.Value && go.GetComponent<Creature>())
+            if (!allowPickupCreature.Value && (go.GetComponent<Creature>() || go.GetComponent<Floater>()))
                 return false;
             if (!allowPickupEdible.Value && go.GetComponent<Eatable>())
                 return false;
-            if (!allowPickupPlants.Value && go.GetComponent<PlantBehaviour>())
+            if (!allowPickupPlants.Value && (go.GetComponent<PlantBehaviour>() || go.GetComponent<Plantable>()))
                 return false;
             if (!allowPickupEgg.Value && (go.GetComponent<CreatureEgg>() || go.GetComponent<IncubatorEgg>()))
                 return false;

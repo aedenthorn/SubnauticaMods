@@ -2,7 +2,8 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using PersonalResourceScanner.Items.Equipment;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -12,15 +13,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Image = UnityEngine.UI.Image;
 
-namespace PersonalResourceScanner
+namespace MobileResourceScanner
 {
-    [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
-    [BepInDependency("com.snmodding.nautilus")]
-    public class BepInExPlugin : BaseUnityPlugin
+    [BepInPlugin("aedenthorn.MobileResourceScanner", "Mobile Resource Scanner", "0.2.3")]
+    public partial class BepInExPlugin : BaseUnityPlugin
     {
-
-        private static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
         private static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
@@ -38,7 +37,7 @@ namespace PersonalResourceScanner
         public static ConfigEntry<string> openMenuString;
         public static ConfigEntry<CraftTree.Type> fabricatorType;
         public static ConfigEntry<KeyboardShortcut> menuHotkey;
-
+        
         public static bool intervalChanged = true;
 
         private static TechType currentTechType = TechType.None;
@@ -47,7 +46,7 @@ namespace PersonalResourceScanner
         public static GameObject menuGO;
         public static TechType chipTechType;
         public static readonly string idString = "MobileResourceScanner";
-
+        
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
             if (isDebug.Value)
@@ -55,10 +54,11 @@ namespace PersonalResourceScanner
         }
         private void Awake()
         {
+
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
-
+            
             requireScanned = Config.Bind<bool>("Options", "RequireScanned", false, "Only show resources that have been scanned by the player");
             range = Config.Bind<float>("Options", "Range", 500f, "Range (m)");
             menuButton = Config.Bind<int>("Options", "Button", 1, "Which button to use to open the menu.");
@@ -66,26 +66,41 @@ namespace PersonalResourceScanner
             currentResource = Config.Bind<string>("Options", "CurrentResource", "None", "Current resource type to scan for");
             ingredients = Config.Bind<string>("Options", "Ingredients", "ComputerChip:1,Magnetite:1", "Required ingredients, comma separated TechType:Amount pairs");
             fabricatorType = Config.Bind<CraftTree.Type>("Options", "FabricatorType", CraftTree.Type.MapRoom, "Fabricator to use to craft the chip.");
-            menuHotkey = Config.Bind<KeyboardShortcut>("Options", "MenuHotkey", new KeyboardShortcut(KeyCode.L, new KeyCode[] { KeyCode.LeftShift }), "Key shortcut used to open the menu.");
+            menuHotkey = Config.Bind<KeyboardShortcut>("Options", "MenuHotkey", new KeyboardShortcut(KeyCode.L, new KeyCode[] { KeyCode.LeftShift}), "Key shortcut used to open the menu.");
 
             nameString = Config.Bind<string>("Text", "NameString", "Mobile Resource Scanner", "Display name");
             descriptionString = Config.Bind<string>("Text", "DescriptionString", "Equip to enable mobile resource scanning", "Display description");
             menuHeader = Config.Bind<string>("Text", "MenuHeader", "Select Resource", "Menu header.");
             openMenuString = Config.Bind<string>("Text", "OpenMenuString", "Switch Resource ({0})", "Tooltip text.");
-            // set project-scoped logger instance
 
-            // Initialize custom prefabs
+            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), Info.Metadata.GUID);
+
+            interval.SettingChanged += Interval_SettingChanged;
+
+            Enum.TryParse(currentResource.Value, false, out currentTechType);
+            currentTechName = Language.main.Get(currentTechType);
+
             InitializePrefabs();
 
-            // register harmony patches, if there are any
-            Harmony.CreateAndPatchAll(Assembly, $"{PluginInfo.PLUGIN_GUID}");
-            Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+            Dbgl("Plugin awake");
         }
-
         private void InitializePrefabs()
         {
-            ScannerPrefab.Register();
+            ScannerItem.Register();
         }
+        public void Update()
+        {
+            if (modEnabled.Value && menuHotkey.Value.IsDown())
+            {
+                ShowMenu();
+            }
+        }
+
+        private void Interval_SettingChanged(object sender, System.EventArgs e)
+        {
+            intervalChanged = true;
+        }
+
 
         [HarmonyPatch(typeof(uGUI_ResourceTracker), "IsVisibleNow")]
         private static class uGUI_ResourceTracker_IsVisibleNow_Patch
@@ -226,7 +241,7 @@ namespace PersonalResourceScanner
             var buttons = gridGO.GetComponentsInChildren<Button>(true);
             Button templateButton = null;
             bool first = true;
-            foreach (var button in buttons)
+            foreach(var button in buttons)
             {
                 if (first)
                 {
@@ -237,19 +252,19 @@ namespace PersonalResourceScanner
                 else Destroy(button.gameObject);
             }
             var techs = new List<TechType>();
-            foreach (var t in ResourceTrackerDatabase.GetTechTypes())
+            foreach(var t in ResourceTrackerDatabase.GetTechTypes())
             {
                 if (!requireScanned.Value || PDAScanner.ContainsCompleteEntry(t))
                     techs.Add(t);
             }
-
+            
             techs.Sort(delegate (TechType a, TechType b)
             {
                 return Language.main.Get(a).CompareTo(Language.main.Get(b));
             });
 
             Dbgl($"Found {techs.Count} techs");
-            if (techs.Count < 1)
+            if(techs.Count < 1)
             {
                 ErrorMessage.AddWarning("No techs found!");
                 return;
@@ -279,9 +294,9 @@ namespace PersonalResourceScanner
             sr.horizontalNormalizedPosition = 0;
 
             uGUI_INavigableIconGrid grid = gridGO.GetComponentInChildren<uGUI_INavigableIconGrid>();
-            if (grid is null)
+            if(grid is null)
                 grid = gridGO.GetComponent<uGUI_INavigableIconGrid>();
-            if (grid != null)
+            if(grid != null)
                 GamepadInputModule.current.SetCurrentGrid(grid);
         }
 

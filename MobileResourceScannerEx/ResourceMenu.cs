@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using UWE;
 
-namespace PersonalResourceScanner
+namespace MobileResourceScanner
 {
     public class ResourceMenu : uGUI_InputGroup, uGUI_IButtonReceiver
     {
@@ -29,7 +29,7 @@ namespace PersonalResourceScanner
             uGUI_LegendBar.ChangeButton(0, uGUI.FormatButton(GameInput.Button.UICancel, false, " / ", true), Language.main.GetFormat("Back"));
             uGUI_LegendBar.ChangeButton(1, uGUI.FormatButton(GameInput.Button.UISubmit, false, " / ", true), Language.main.GetFormat("ItemSelectorSelect"));
         }
-        public override void OnDisable()
+        protected override void OnDisable()
         {
             //BepInExPlugin.Dbgl("Disabling menu");
             base.OnDisable();

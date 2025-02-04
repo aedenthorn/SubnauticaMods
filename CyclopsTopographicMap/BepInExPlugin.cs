@@ -41,7 +41,7 @@ namespace CyclopsTopographicMap
         }
 
 
-        [HarmonyPatch(typeof(PilotingChair), nameof(PilotingChair.Start))]
+        [HarmonyPatch(typeof(SubRoot), nameof(SubRoot.Start))]
         private static class PilotingChair_Start_Patch
         {
             static void Postfix(PilotingChair __instance)

@@ -33,8 +33,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CraftFromRawMaterials", "Cr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrackEverything", "TrackEverything\TrackEverything.csproj", "{65F2523F-16E9-4BFE-8D54-8D4611B16489}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalResourceScanner", "PersonalResourceScanner\PersonalResourceScanner.csproj", "{10F4DB79-3248-428E-83C7-A5CCB45744BB}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8FCF3F1F-0545-4C50-9E81-19BB2A65C8B3}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -44,6 +42,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimplePosters", "SimplePost
 	ProjectSection(ProjectDependencies) = postProject
 		{18A3B92E-0F87-4AD7-9754-F256B6691282} = {18A3B92E-0F87-4AD7-9754-F256B6691282}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CyclopsSolarCharger", "CyclopsSolarCharger\CyclopsSolarCharger.csproj", "{3A1DB49C-577C-4C44-B197-1B59C62EA267}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobileResourceScanner", "MobileResourceScanner\MobileResourceScanner.csproj", "{48109381-479D-49DC-85BD-7514F9923950}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -111,14 +113,18 @@ Global
 		{65F2523F-16E9-4BFE-8D54-8D4611B16489}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65F2523F-16E9-4BFE-8D54-8D4611B16489}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65F2523F-16E9-4BFE-8D54-8D4611B16489}.Release|Any CPU.Build.0 = Release|Any CPU
-		{10F4DB79-3248-428E-83C7-A5CCB45744BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10F4DB79-3248-428E-83C7-A5CCB45744BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{10F4DB79-3248-428E-83C7-A5CCB45744BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10F4DB79-3248-428E-83C7-A5CCB45744BB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C55CF1A6-71B1-4354-8A1F-210C777AFCCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C55CF1A6-71B1-4354-8A1F-210C777AFCCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C55CF1A6-71B1-4354-8A1F-210C777AFCCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C55CF1A6-71B1-4354-8A1F-210C777AFCCB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A1DB49C-577C-4C44-B197-1B59C62EA267}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A1DB49C-577C-4C44-B197-1B59C62EA267}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A1DB49C-577C-4C44-B197-1B59C62EA267}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A1DB49C-577C-4C44-B197-1B59C62EA267}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48109381-479D-49DC-85BD-7514F9923950}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48109381-479D-49DC-85BD-7514F9923950}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48109381-479D-49DC-85BD-7514F9923950}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48109381-479D-49DC-85BD-7514F9923950}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

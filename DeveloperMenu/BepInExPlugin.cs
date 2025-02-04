@@ -5,8 +5,11 @@ using HarmonyLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DeveloperMenu
 {
@@ -141,6 +144,54 @@ namespace DeveloperMenu
         }
 
 
+        [HarmonyPatch(typeof(uGUI_TabbedControlsPanel), "SetVisibleTab")]
+        private static class uGUI_TabbedControlsPanel_SetVisibleTab_Patch
+        {
+            static void Postfix(uGUI_TabbedControlsPanel __instance, int tabIndex)
+            {
+                if (!modEnabled.Value || !(__instance is uGUI_DeveloperPanel))
+                    return;
+
+                var tabs = AccessTools.Field(typeof(uGUI_TabbedControlsPanel), "tabs").GetValue(__instance) as ICollection;
+                int count = 0;
+                foreach(var tab in tabs)
+                {
+                    if(count == tabIndex)
+                    {
+                        GameObject tabGO = (GameObject)AccessTools.Field(tab.GetType(), "tab").GetValue(tab);
+                        Dbgl($"2 {tabGO.GetComponentInChildren<TranslationLiveUpdate>().translationKey}");
+                        if (tabGO.GetComponentInChildren<TranslationLiveUpdate>().translationKey == spawnTabLabel.Value)
+                        {
+                            GameObject panelGO = (GameObject)AccessTools.Field(tab.GetType(), "pane").GetValue(tab);
+                            if (panelGO.transform.Find("SpawnTabInput") == null)
+                            {
+                                GameObject sti = Instantiate(uGUI.main.userInput.inputField.gameObject, panelGO.transform);
+                                sti.name = "SpawnTabInput";
+                                var tmpi = sti.GetComponentInChildren<TMP_InputField>();
+                                tmpi.text = "";
+                                //sti.GetComponent<RectTransform>().localPosition = new;
+                                tmpi.onValueChanged = new TMP_InputField.OnChangeEvent();
+                                tmpi.onValueChanged.AddListener(delegate (string value) { FilterSpawnEntries(panelGO, value); });
+                                var rt = sti.GetComponent<RectTransform>();
+                                rt.localPosition = new Vector3(200, -50, 0);
+                            }
+                        }
+                        break;
+                    }
+                    count++;
+                }
+            }
+
+            private static void FilterSpawnEntries(GameObject panelGO, string value)
+            {
+                var lower = value.ToLower();
+                foreach (var b in panelGO.GetComponentsInChildren<Button>(true))
+                {
+                    var tmp = b.GetComponentInChildren<TextMeshProUGUI>();
+                    b.transform.parent.gameObject.SetActive(value?.Length < 2 || tmp.text.ToLower().Contains(lower));
+                }
+            }
+        }
         [HarmonyPatch(typeof(uGUI_DeveloperPanel), "AddTabs")]
         private static class uGUI_DeveloperPanel_AddTabs_Patch
         {
@@ -233,6 +284,32 @@ namespace DeveloperMenu
                 }
                 return false;
             }
+        }
+        private struct Tab
+        {
+            // Token: 0x04004DC6 RID: 19910
+            public GameObject tab;
+
+            // Token: 0x04004DC7 RID: 19911
+            public GameObject pane;
+
+            // Token: 0x04004DC8 RID: 19912
+            public RectTransform container;
+
+            // Token: 0x04004DC9 RID: 19913
+            public Selectable tabButton;
+
+            // Token: 0x04004DCA RID: 19914
+            public Selectable firstSelectable;
+
+            // Token: 0x04004DCB RID: 19915
+            public Selectable lastSelectable;
+
+            // Token: 0x04004DCC RID: 19916
+            public GameObject lastObject;
+
+            // Token: 0x04004DCD RID: 19917
+            public Selectable prevSelectable;
         }
     }
 }

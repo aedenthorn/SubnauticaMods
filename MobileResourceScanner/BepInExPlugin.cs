@@ -2,8 +2,8 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using System;
-using System.Collections;
+using MobileResourceScanner.Items.Equipment;
+using rail;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -13,13 +13,15 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Image = UnityEngine.UI.Image;
 
 namespace MobileResourceScanner
 {
-    [BepInPlugin("aedenthorn.MobileResourceScanner", "Mobile Resource Scanner", "0.2.3")]
-    public partial class BepInExPlugin : BaseUnityPlugin
+    [BepInPlugin("aedenthorn.MobileResourceScanner", "MobileResourceScanner", "1.0.1")]
+    [BepInDependency("com.snmodding.nautilus")]
+    public class BepInExPlugin : BaseUnityPlugin
     {
+
+        private static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
         private static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
@@ -37,16 +39,15 @@ namespace MobileResourceScanner
         public static ConfigEntry<string> openMenuString;
         public static ConfigEntry<CraftTree.Type> fabricatorType;
         public static ConfigEntry<KeyboardShortcut> menuHotkey;
-        
+
         public static bool intervalChanged = true;
 
         private static TechType currentTechType = TechType.None;
         private static string currentTechName = "None";
 
         public static GameObject menuGO;
-        public static TechType chipTechType;
         public static readonly string idString = "MobileResourceScanner";
-        
+
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
             if (isDebug.Value)
@@ -54,11 +55,10 @@ namespace MobileResourceScanner
         }
         private void Awake()
         {
-
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
-            
+
             requireScanned = Config.Bind<bool>("Options", "RequireScanned", false, "Only show resources that have been scanned by the player");
             range = Config.Bind<float>("Options", "Range", 500f, "Range (m)");
             menuButton = Config.Bind<int>("Options", "Button", 1, "Which button to use to open the menu.");
@@ -66,27 +66,19 @@ namespace MobileResourceScanner
             currentResource = Config.Bind<string>("Options", "CurrentResource", "None", "Current resource type to scan for");
             ingredients = Config.Bind<string>("Options", "Ingredients", "ComputerChip:1,Magnetite:1", "Required ingredients, comma separated TechType:Amount pairs");
             fabricatorType = Config.Bind<CraftTree.Type>("Options", "FabricatorType", CraftTree.Type.MapRoom, "Fabricator to use to craft the chip.");
-            menuHotkey = Config.Bind<KeyboardShortcut>("Options", "MenuHotkey", new KeyboardShortcut(KeyCode.L, new KeyCode[] { KeyCode.LeftShift}), "Key shortcut used to open the menu.");
+            menuHotkey = Config.Bind<KeyboardShortcut>("Options", "MenuHotkey", new KeyboardShortcut(KeyCode.L, new KeyCode[] { KeyCode.LeftShift }), "Key shortcut used to open the menu.");
 
             nameString = Config.Bind<string>("Text", "NameString", "Mobile Resource Scanner", "Display name");
             descriptionString = Config.Bind<string>("Text", "DescriptionString", "Equip to enable mobile resource scanning", "Display description");
             menuHeader = Config.Bind<string>("Text", "MenuHeader", "Select Resource", "Menu header.");
             openMenuString = Config.Bind<string>("Text", "OpenMenuString", "Switch Resource ({0})", "Tooltip text.");
+            // set project-scoped logger instance
 
-            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), Info.Metadata.GUID);
-
-            interval.SettingChanged += Interval_SettingChanged;
-
-            Enum.TryParse(currentResource.Value, false, out currentTechType);
-            currentTechName = Language.main.Get(currentTechType);
-
+            // Initialize custom prefabs
             InitializePrefabs();
 
-            Dbgl("Plugin awake");
-        }
-        private void InitializePrefabs()
-        {
-            ScannerItem.Register();
+            // register harmony patches, if there are any
+            Harmony.CreateAndPatchAll(Assembly, $"{Info.Metadata.GUID}");
         }
         public void Update()
         {
@@ -96,11 +88,10 @@ namespace MobileResourceScanner
             }
         }
 
-        private void Interval_SettingChanged(object sender, System.EventArgs e)
+        private void InitializePrefabs()
         {
-            intervalChanged = true;
+            ScannerPrefab.Register();
         }
-
 
         [HarmonyPatch(typeof(uGUI_ResourceTracker), "IsVisibleNow")]
         private static class uGUI_ResourceTracker_IsVisibleNow_Patch
@@ -123,12 +114,23 @@ namespace MobileResourceScanner
                 return codes.AsEnumerable();
             }
         }
+        [HarmonyPatch(typeof(uGUI_ResourceTracker), "GatherScanned")]
+        private static class uGUI_ResourceTracker_GatherScanned_Patch
+        {
+            static bool Prefix(uGUI_ResourceTracker __instance)
+            {
+                if (!modEnabled.Value || currentTechType == TechType.None || Inventory.main?.equipment?.GetCount(ScannerPrefab.Info.TechType) == 0)
+                    return true;
+                __instance.GatherNodes();
+                return false;
+            }
+        }
 
         private static int GetCount(int count)
         {
             if (!modEnabled.Value || count > 0)
                 return count;
-            return Inventory.main.equipment.GetCount(chipTechType);
+            return Inventory.main.equipment.GetCount(ScannerPrefab.Info.TechType);
         }
 
         [HarmonyPatch(typeof(uGUI_ResourceTracker), "GatherNodes")]
@@ -136,7 +138,7 @@ namespace MobileResourceScanner
         {
             static bool Prefix(uGUI_ResourceTracker __instance, HashSet<ResourceTrackerDatabase.ResourceInfo> ___nodes, List<TechType> ___techTypes)
             {
-                if (!modEnabled.Value || currentTechType == TechType.None || Inventory.main?.equipment?.GetCount(chipTechType) == 0)
+                if (!modEnabled.Value || currentTechType == TechType.None || Inventory.main?.equipment?.GetCount(ScannerPrefab.Info.TechType) == 0)
                     return true;
 
                 Camera camera = MainCamera.camera;
@@ -161,7 +163,7 @@ namespace MobileResourceScanner
             {
                 if (!modEnabled.Value)
                     return true;
-                if (!___slots.TryGetValue(instance, out var item) || item.techType != chipTechType || Inventory.main.GetItemAction(item, button) > ItemAction.None || button != menuButton.Value)
+                if (!___slots.TryGetValue(instance, out var item) || item.techType != ScannerPrefab.Info.TechType || Inventory.main.GetItemAction(item, button) > ItemAction.None || button != menuButton.Value)
                 {
                     return true;
                 }
@@ -176,11 +178,12 @@ namespace MobileResourceScanner
         {
             static void Postfix(StringBuilder sb, InventoryItem item)
             {
-                if (!modEnabled.Value || item.techType != chipTechType)
+                if (!modEnabled.Value || item.techType != ScannerPrefab.Info.TechType)
                     return;
                 AccessTools.Method(typeof(TooltipFactory), "WriteAction").Invoke(null, new object[] { sb, AccessTools.Field(typeof(TooltipFactory), $"stringButton{menuButton.Value}").GetValue(null), string.Format(openMenuString.Value, currentTechName) });
             }
         }
+        
         private static void ShowMenu()
         {
             var template = IngameMenu.main?.GetComponentInChildren<IngameMenuTopLevel>();
@@ -189,27 +192,35 @@ namespace MobileResourceScanner
                 ErrorMessage.AddWarning("Menu template not found!");
                 return;
             }
+            int width = 545;
+            int height = 800;
             var rtt = IngameMenu.main.GetComponent<RectTransform>();
             menuGO = new GameObject("ResourceMenu");
             menuGO.transform.SetParent(uGUI.main.hud.transform);
             var rtb = menuGO.AddComponent<RectTransform>();
-            rtb.sizeDelta = new Vector2(545, 700);
+            rtb.sizeDelta = new Vector2(width, height);
             //rtb.localPosition = rtt.localPosition;
             //rtb.pivot = rtt.pivot;
             //rtb.anchorMax = rtt.anchorMax;
             //rtb.anchorMin = rtt.anchorMin;
+            var menuContent = Instantiate(template.GetComponentInChildren<VerticalLayoutGroup>().gameObject, menuGO.transform);
+            DestroyImmediate(menuContent.GetComponent<IngameMenuTopLevel>());
+            DestroyImmediate(menuContent.GetComponent<ContentSizeFitter>());
+            DestroyImmediate(menuContent.GetComponent<VerticalLayoutGroup>());
+            DestroyImmediate(menuContent.transform.Find("Header").gameObject);
+            menuContent.GetComponent<RectTransform>().sizeDelta = new Vector2(width, height);
 
             Dbgl($"Adding scroll view");
 
             GameObject scrollObject = new GameObject() { name = "ScrollView" };
-            scrollObject.transform.SetParent(menuGO.transform);
+            scrollObject.transform.SetParent(menuContent.transform);
             var rts = scrollObject.AddComponent<RectTransform>();
-            rts.sizeDelta = rtb.sizeDelta;
+            rts.sizeDelta = new Vector2(width, height - 200); // leave room for button
 
             GameObject mask = new GameObject { name = "Mask" };
             mask.transform.SetParent(scrollObject.transform);
             var rtm = mask.AddComponent<RectTransform>();
-            rtm.sizeDelta = rtb.sizeDelta;
+            rtm.sizeDelta = new Vector2(rts.sizeDelta.x - 140, rts.sizeDelta.y);
 
             Texture2D tex = new Texture2D((int)Mathf.Ceil(rtm.rect.width), (int)Mathf.Ceil(rtm.rect.height));
             Image image = mask.AddComponent<Image>();
@@ -217,18 +228,21 @@ namespace MobileResourceScanner
             Mask m = mask.AddComponent<Mask>();
             m.showMaskGraphic = false;
 
+            var gridContent = Instantiate(menuContent.transform.Find("ButtonLayout").gameObject, mask.transform);
+            DestroyImmediate(menuContent.transform.Find("ButtonLayout").gameObject);
+
             var sr = scrollObject.AddComponent<ScrollRect>();
 
             Dbgl("Added scroll view");
 
-            var gridGO = Instantiate(template.gameObject, mask.transform);
-            var header = gridGO.transform.Find("Header");
+            var header = Instantiate(template.transform.Find("Header").gameObject, menuGO.transform).transform;
             var rth = header.GetComponent<RectTransform>();
 
-            var rtg = gridGO.GetComponent<RectTransform>();
+            var rtg = gridContent.GetComponent<RectTransform>();
+            DestroyImmediate(gridContent.GetComponent<ContentSizeFitter>());
             sr.content = rtg;
 
-            var menu = gridGO.AddComponent<ResourceMenu>();
+            var menu = menuContent.gameObject.AddComponent<ResourceMenu>();
             menu.Select();
 
             sr.movementType = ScrollRect.MovementType.Clamped;
@@ -238,10 +252,10 @@ namespace MobileResourceScanner
 
             Dbgl("Created menu");
 
-            var buttons = gridGO.GetComponentsInChildren<Button>(true);
+            var buttons = menuContent.GetComponentsInChildren<Button>(true);
             Button templateButton = null;
             bool first = true;
-            foreach(var button in buttons)
+            foreach (var button in buttons)
             {
                 if (first)
                 {
@@ -252,40 +266,40 @@ namespace MobileResourceScanner
                 else Destroy(button.gameObject);
             }
             var techs = new List<TechType>();
-            foreach(var t in ResourceTrackerDatabase.GetTechTypes())
+            foreach (var t in ResourceTrackerDatabase.GetTechTypes())
             {
                 if (!requireScanned.Value || PDAScanner.ContainsCompleteEntry(t))
                     techs.Add(t);
             }
-            
+
             techs.Sort(delegate (TechType a, TechType b)
             {
                 return Language.main.Get(a).CompareTo(Language.main.Get(b));
             });
 
             Dbgl($"Found {techs.Count} techs");
-            if(techs.Count < 1)
+            if (techs.Count < 1)
             {
                 ErrorMessage.AddWarning("No techs found!");
                 return;
             }
 
             techs.Insert(0, TechType.None);
-
+            rtg.sizeDelta = new Vector2(rtm.sizeDelta.x, techs.Count * 65);
             rtb.localScale = Vector3.one;
             rtb.anchoredPosition3D = Vector3.zero;
 
 
             header.SetParent(menuGO.transform);
-            rth.anchoredPosition = new Vector2(272.5f, 700);
+            rth.localPosition = new Vector2(0, 332);
             rth.sizeDelta = new Vector2(545f, 100);
             var headerText = header.GetComponent<TextMeshProUGUI>();
             headerText.text = menuHeader.Value;
             Dbgl($"Header size: {rth.sizeDelta}");
-
+            
             foreach (var t in techs)
             {
-                GameObject b = Instantiate(templateButton.gameObject, gridGO.transform);
+                GameObject b = Instantiate(templateButton.gameObject, gridContent.transform);
                 SetupButton(b, t);
             }
             Destroy(templateButton.gameObject);
@@ -293,13 +307,34 @@ namespace MobileResourceScanner
             sr.verticalNormalizedPosition = 1;
             sr.horizontalNormalizedPosition = 0;
 
-            uGUI_INavigableIconGrid grid = gridGO.GetComponentInChildren<uGUI_INavigableIconGrid>();
-            if(grid is null)
-                grid = gridGO.GetComponent<uGUI_INavigableIconGrid>();
-            if(grid != null)
+            uGUI_INavigableIconGrid grid = menuContent.GetComponentInChildren<uGUI_INavigableIconGrid>();
+            if (grid != null)
                 GamepadInputModule.current.SetCurrentGrid(grid);
+
+            GameObject sti = Instantiate(uGUI.main.userInput.inputField.gameObject, menuGO.transform);
+            sti.name = "FilterInput";
+            var tmpi = sti.GetComponentInChildren<TMP_InputField>();
+            tmpi.text = "";
+            tmpi.onValueChanged = new TMP_InputField.OnChangeEvent();
+            tmpi.onValueChanged.AddListener(delegate (string value) { FilterMenuEntries(gridContent, value); });
+            var rt = sti.GetComponent<RectTransform>();
+            rt.localPosition = new Vector3(0, -332, 0);
         }
 
+        private static void FilterMenuEntries(GameObject gridGO, string value)
+        {
+            var lower = value.ToLower();
+            int count = 0;
+            foreach (var b in gridGO.GetComponentsInChildren<Button>(true))
+            {
+                var tmp = b.GetComponentInChildren<TextMeshProUGUI>();
+                bool active = value?.Length < 2 || tmp.text.ToLower().Contains(lower);
+                b.transform.gameObject.SetActive(active);
+                if (active)
+                    count++;
+            }
+            gridGO.GetComponent<RectTransform>().sizeDelta = new Vector2(gridGO.GetComponent<RectTransform>().sizeDelta.x, 65 * count);
+        }
         private static void SetupButton(GameObject gameObject, TechType t)
         {
             gameObject.name = $"Button{t}";
