@@ -4,6 +4,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using MobileResourceScanner.Items.Equipment;
 using rail;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -16,7 +17,7 @@ using UnityEngine.UI;
 
 namespace MobileResourceScanner
 {
-    [BepInPlugin("aedenthorn.MobileResourceScanner", "MobileResourceScanner", "1.0.1")]
+    [BepInPlugin("aedenthorn.MobileResourceScanner", "MobileResourceScanner", "1.1.0")]
     [BepInDependency("com.snmodding.nautilus")]
     public class BepInExPlugin : BaseUnityPlugin
     {
@@ -28,6 +29,7 @@ namespace MobileResourceScanner
         public static ConfigEntry<bool> isDebug;
 
         public static ConfigEntry<bool> requireScanned;
+        public static ConfigEntry<bool> alwaysShowAllTechTypes;
         public static ConfigEntry<float> range;
         public static ConfigEntry<float> interval;
         public static ConfigEntry<int> menuButton;
@@ -60,6 +62,7 @@ namespace MobileResourceScanner
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
 
             requireScanned = Config.Bind<bool>("Options", "RequireScanned", false, "Only show resources that have been scanned by the player");
+            alwaysShowAllTechTypes = Config.Bind<bool>("Options", "AlwaysShowAllTechTypes", false, "List every tech type in the game, even those not able to be scanned for");
             range = Config.Bind<float>("Options", "Range", 500f, "Range (m)");
             menuButton = Config.Bind<int>("Options", "Button", 1, "Which button to use to open the menu.");
             interval = Config.Bind<float>("Options", "Interval", 10f, "Interval (s)");
@@ -82,7 +85,7 @@ namespace MobileResourceScanner
         }
         public void Update()
         {
-            if (modEnabled.Value && menuHotkey.Value.IsDown())
+            if (modEnabled.Value && !Player.main.GetPDA().isInUse && FPSInputModule.current?.lastGroup == null && menuHotkey.Value.IsDown())
             {
                 ShowMenu();
             }
@@ -235,14 +238,14 @@ namespace MobileResourceScanner
 
             Dbgl("Added scroll view");
 
-            var header = Instantiate(template.transform.Find("Header").gameObject, menuGO.transform).transform;
+            var header = Instantiate(template.transform.Find("Header").gameObject, menuContent.transform).transform;
             var rth = header.GetComponent<RectTransform>();
 
             var rtg = gridContent.GetComponent<RectTransform>();
             DestroyImmediate(gridContent.GetComponent<ContentSizeFitter>());
             sr.content = rtg;
 
-            var menu = menuContent.gameObject.AddComponent<ResourceMenu>();
+            var menu = menuGO.AddComponent<ResourceMenu>();
             menu.Select();
 
             sr.movementType = ScrollRect.MovementType.Clamped;
@@ -266,10 +269,23 @@ namespace MobileResourceScanner
                 else Destroy(button.gameObject);
             }
             var techs = new List<TechType>();
-            foreach (var t in ResourceTrackerDatabase.GetTechTypes())
+            if (alwaysShowAllTechTypes.Value)
             {
-                if (!requireScanned.Value || PDAScanner.ContainsCompleteEntry(t))
-                    techs.Add(t);
+                foreach (TechType t in Enum.GetValues(typeof(TechType)))
+                {
+                    if (!requireScanned.Value || PDAScanner.ContainsCompleteEntry(t))
+                        techs.Add(t);
+                }
+
+            }
+            else
+            {
+                foreach (var t in ResourceTrackerDatabase.GetTechTypes())
+                {
+                    if (!requireScanned.Value || PDAScanner.ContainsCompleteEntry(t))
+                        techs.Add(t);
+                }
+
             }
 
             techs.Sort(delegate (TechType a, TechType b)
@@ -290,8 +306,8 @@ namespace MobileResourceScanner
             rtb.anchoredPosition3D = Vector3.zero;
 
 
-            header.SetParent(menuGO.transform);
-            rth.localPosition = new Vector2(0, 332);
+            header.SetParent(menuContent.transform);
+            rth.localPosition = new Vector2(0, 362);
             rth.sizeDelta = new Vector2(545f, 100);
             var headerText = header.GetComponent<TextMeshProUGUI>();
             headerText.text = menuHeader.Value;
@@ -311,14 +327,14 @@ namespace MobileResourceScanner
             if (grid != null)
                 GamepadInputModule.current.SetCurrentGrid(grid);
 
-            GameObject sti = Instantiate(uGUI.main.userInput.inputField.gameObject, menuGO.transform);
+            GameObject sti = Instantiate(uGUI.main.userInput.inputField.gameObject, menuContent.transform);
             sti.name = "FilterInput";
             var tmpi = sti.GetComponentInChildren<TMP_InputField>();
             tmpi.text = "";
             tmpi.onValueChanged = new TMP_InputField.OnChangeEvent();
             tmpi.onValueChanged.AddListener(delegate (string value) { FilterMenuEntries(gridContent, value); });
             var rt = sti.GetComponent<RectTransform>();
-            rt.localPosition = new Vector3(0, -332, 0);
+            rt.localPosition = new Vector3(0, -362, 0);
         }
 
         private static void FilterMenuEntries(GameObject gridGO, string value)

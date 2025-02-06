@@ -102,7 +102,7 @@ namespace AutoHarvest
         {
             if (!modEnabled.Value)
                 return;
-            forbiddenTypes = new string[] { "MapRoomCamera", "SmallStorage", "Gravsphere" };
+            forbiddenTypes = new string[] { "MapRoomCamera", "SmallStorage", "Gravsphere", "Constructor" };
             allowedTypes = new string[0];
             string folder = AedenthornUtils.GetAssetPath(context, false);
             string f = Path.Combine(folder, forbiddenFile);
@@ -218,7 +218,7 @@ namespace AutoHarvest
                     ErrorMessage.AddWarning(Language.main.Get("InventoryFull"));
                     return;
                 }
-                Debug.Log("Picked up " + pickupable.GetTechName());
+                Dbgl("Picked up " + pickupable.GetTechName());
                 WaterParkItem component = pickupable.GetComponent<WaterParkItem>();
                 if (component != null)
                 {

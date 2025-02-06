@@ -34,20 +34,21 @@ namespace MobileResourceScanner
             //BepInExPlugin.Dbgl("Disabling menu");
             base.OnDisable();
             uGUI_LegendBar.ClearButtons();
+            FreezeTime.End(FreezeTime.Id.IngameMenu);
             Destroy(BepInExPlugin.menuGO);
         }
         public override void OnSelect(bool lockMovement)
         {
             base.OnSelect(lockMovement);
             gameObject.SetActive(true);
-            //FreezeTime.Begin(FreezeTime.Id.IngameMenu);
+            FreezeTime.Begin(FreezeTime.Id.IngameMenu);
             UWE.Utils.lockCursor = false;
         }
         public override void OnDeselect()
         {
             //BepInExPlugin.Dbgl("Deselecting menu");
             base.OnDeselect();
-            //FreezeTime.End(FreezeTime.Id.IngameMenu);
+            FreezeTime.End(FreezeTime.Id.IngameMenu);
             Destroy(BepInExPlugin.menuGO);
         }
     }
