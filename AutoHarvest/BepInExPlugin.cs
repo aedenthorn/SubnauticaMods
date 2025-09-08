@@ -52,7 +52,7 @@ namespace AutoHarvest
 
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
-            isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
+            isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
             toggleKey = Config.Bind<KeyCode>("General", "ToggleKey", KeyCode.End, "Key to press to toggle mod.");
             preventPickingUpDropped = Config.Bind<bool>("Options", "PreventPickingUpDropped", true, "Prevent auto pickup of items dropped by the player");
             breakBreakables = Config.Bind<bool>("Options", "BreakBreakables", true, "Break breakables");

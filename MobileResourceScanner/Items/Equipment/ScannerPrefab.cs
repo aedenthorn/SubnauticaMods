@@ -7,7 +7,6 @@ using Nautilus.Handlers;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Ingredient = CraftData.Ingredient;
 
 namespace MobileResourceScanner.Items.Equipment
 {

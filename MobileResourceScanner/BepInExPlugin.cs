@@ -85,7 +85,7 @@ namespace MobileResourceScanner
         }
         public void Update()
         {
-            if (modEnabled.Value && !Player.main.GetPDA().isInUse && FPSInputModule.current?.lastGroup == null && menuHotkey.Value.IsDown())
+            if (modEnabled.Value && Player.main?.GetPDA()?.isInUse == false && FPSInputModule.current?.lastGroup == null && menuHotkey.Value.IsDown())
             {
                 ShowMenu();
             }
@@ -124,7 +124,7 @@ namespace MobileResourceScanner
             {
                 if (!modEnabled.Value || currentTechType == TechType.None || Inventory.main?.equipment?.GetCount(ScannerPrefab.Info.TechType) == 0)
                     return true;
-                __instance.GatherNodes();
+                AccessTools.Method(typeof(uGUI_ResourceTracker), "GatherNodes").Invoke(__instance, new object[] { });
                 return false;
             }
         }

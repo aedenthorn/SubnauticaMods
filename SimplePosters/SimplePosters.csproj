@@ -1,45 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="$(SolutionDir)\solution_private.targets" />
-
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
-	<AssemblyName>SimplePosters</AssemblyName>
     <Version>1.0.0</Version>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>11</LangVersion>
-	<RootNamespace>SimplePosters</RootNamespace>
-
-    <RestoreAdditionalProjectSources>
-      https://api.nuget.org/v3/index.json;
-      https://nuget.bepinex.dev/v3/index.json;
-    </RestoreAdditionalProjectSources>
   </PropertyGroup>
-
+  <Import Project="$(SolutionDir)\solution_private.targets" />
+  <Import Project="$(SolutionDir)\solution.targets" />
   <ItemGroup>
     <Compile Include="..\AedenthornUtils\AedenthornUtils.cs" Link="AedenthornUtils.cs" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
-    <PackageReference Include="BepInEx.Core" Version="5.4.21" />
-    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.1.0" />
-    <PackageReference Include="UnityEngine.Modules" Version="2019.4.36" IncludeAssets="compile" />
-    <PackageReference Include="Subnautica.GameLibs" Version="71288.0.0-r.0" />
-    <PackageReference Include="PolySharp" Version="1.13.1" />
-    <PackageReference Include="Subnautica.Nautilus" Version="1.*-*" PrivateAssets="all" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
-  </ItemGroup>
-    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <ItemGroup>
-      <AllFiles Include="$(TargetDir)**\$(TargetName).dll"/>
-    </ItemGroup>
-    <Copy SourceFiles="@(AllFiles)" DestinationFolder="$(GamePath)\BepInEx\plugins\%(RecursiveDir)"></Copy>
-    <Delete Files="$(ProjectDir)\bin\$(TargetName).zip" />
-    <Copy SourceFiles="@(AllFiles)" DestinationFolder="$(TargetDir)..\Release\%(RecursiveDir)"></Copy>
-    <ZipDirectory SourceDirectory="$(TargetDir)..\Release" DestinationFile="$(ProjectDir)\bin\$(TargetName).zip" />
-    <RemoveDir Directories="$(TargetDir)..\Release" />
-  </Target>
 </Project>
