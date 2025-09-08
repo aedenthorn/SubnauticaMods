@@ -136,6 +136,11 @@
       <HintPath>$(UnityPath)\UnityEngine.InputModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.InputSystem">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(UnityPath)\Unity.InputSystem.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.ParticleSystemModule">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(UnityPath)\UnityEngine.ParticleSystemModule.dll</HintPath>
@@ -191,6 +196,11 @@
       <HintPath>$(UnityPath)\UnityEngine.ImageConversionModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(UnityPath)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
 
     <Reference Include="UnityEngine.TerrainModule">
       <SpecificVersion>False</SpecificVersion>
@@ -239,10 +249,13 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+  </ItemGroup>
   <!-- Copy to plugins folder and zip -->
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <ItemGroup>
-      <AllFiles Include="$(TargetDir)**\*.*" Exclude="$(TargetDir)**\*.pdb" />
+      <AllFiles Include="$(TargetDir)**\$(TargetName).dll"/>
     </ItemGroup>
     <Copy SourceFiles="@(AllFiles)" DestinationFolder="$(GamePath)\BepInEx\plugins\%(RecursiveDir)"></Copy>
     <Delete Files="$(ProjectDir)\bin\$(TargetName).zip" />

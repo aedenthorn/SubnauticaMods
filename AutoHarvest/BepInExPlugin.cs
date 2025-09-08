@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace AutoHarvest
 {
-    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.5.0")]
+    [BepInPlugin("aedenthorn.AutoHarvest", "AutoHarvest", "0.6.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -37,7 +37,9 @@ namespace AutoHarvest
         public static string[] forbiddenTypes = new string[0];
         public static string allowedFile = "allowed_types.txt";
         public static string forbiddenFile = "forbidden_types.txt";
-        
+
+        public static float lastPoll;
+
         private static FieldInfo inventoryItemField = AccessTools.Field(typeof(Pickupable), "inventoryItem");
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
@@ -69,29 +71,12 @@ namespace AutoHarvest
 
             modEnabled.SettingChanged += ModEnabled_SettingChanged;
 
-            interval.SettingChanged += Interval_SettingChanged;
-            
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
-            InvokeRepeating("CheckAutoHarvest", 0, interval.Value);
 
             ReloadTypes();
         }
 
-        private void Interval_SettingChanged(object sender, EventArgs e)
-        {
-            CancelInvoke("CheckAutoHarvest");
-            InvokeRepeating("CheckAutoHarvest", 0, interval.Value);
-        }
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(toggleKey.Value))
-            {
-                modEnabled.Value = !modEnabled.Value;
-                ErrorMessage.AddWarning(modEnabled.Value ? enabledMessage.Value : disabledMessage.Value);
-            }
-        }
 
         private void ModEnabled_SettingChanged(object sender, EventArgs e)
         {
@@ -123,13 +108,15 @@ namespace AutoHarvest
             }
         }
 
-        private void CheckAutoHarvest()
+        private static void CheckAutoHarvest()
         {
-            if(!modEnabled.Value || Player.main == null || Player.main.transform == null)
+
+            if (!modEnabled.Value || Player.main == null || Player.main.transform == null)
                 return;
             Collider[] colliders = Physics.OverlapSphere(Player.main.transform.position, range.Value);
             if (!Player.main.HasInventoryRoom(1, 1))
                 return;
+            Dbgl("searching...");
             //Collider[] colliders = new Collider[maxHarvest.Value];
             //Physics.OverlapSphereNonAlloc(Player.main.transform.position, 100, colliders);
 
@@ -199,11 +186,6 @@ namespace AutoHarvest
                     }
                 }
             }
-            if (reset)
-            {
-                CancelInvoke("CheckAutoHarvest");
-                InvokeRepeating("CheckAutoHarvest", 0.1f, interval.Value);
-            }
         }
 
         private static void Pickup(Pickupable pickupable)
@@ -259,10 +241,45 @@ namespace AutoHarvest
         {
             static void Postfix(Pickupable __instance, ref float ___timeDropped)
             {
-                if (!modEnabled.Value)
-                    return;
 
                 ___timeDropped = Time.time;
+            }
+        }
+
+        [HarmonyPatch(typeof(Player), nameof(Player.Update))]
+        private static class Player_Update_Patch
+        {
+            static void Postfix()
+            {
+                if (Player.main == null || Player.main.transform == null)
+                    return;
+                if (Input.GetKeyDown(toggleKey.Value))
+                {
+                    Dbgl("click");
+                    modEnabled.Value = !modEnabled.Value;
+                    ErrorMessage.AddWarning(modEnabled.Value ? enabledMessage.Value : disabledMessage.Value);
+                }
+                if (modEnabled.Value)
+                {
+                    if(lastPoll > interval.Value)
+                    {
+                        lastPoll = 0;
+                        CheckAutoHarvest();
+                    }
+                    else
+                    {
+                        lastPoll += Time.deltaTime;
+                    }
+                }
+            }
+        }
+        [HarmonyPatch(typeof(Player), nameof(Player.Awake))]
+        private static class Player_Awake_Patch
+        {
+            static void Postfix(Player __instance)
+            {
+                __instance.InvokeRepeating("CheckAutoHarvest", 0, interval.Value);
+
             }
         }
     }

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace CyclopsSolarCharger
 {
-    [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
+    [BepInPlugin("aedenthorn.CyclopsSolarCharger", "CyclopsSolarCharger", "0.2.0")]
     [BepInDependency("com.snmodding.nautilus")]
     public class BepInExPlugin : BaseUnityPlugin
     {
@@ -43,13 +43,12 @@ namespace CyclopsSolarCharger
 
             nameString = Config.Bind<string>("Text", "NameString", "Cyclops Solar Charger", "Display name");
             descriptionString = Config.Bind<string>("Text", "DescriptionString", "Enables recharging the Cyclops' batteries while in the sun.", "Display description");
-            // set project-scoped logger instance
 
             // Initialize custom prefabs
             InitializePrefabs();
 
             // register harmony patches, if there are any
-            Harmony.CreateAndPatchAll(Assembly, $"{PluginInfo.PLUGIN_GUID}");
+            Harmony.CreateAndPatchAll(Assembly, "aedenthorn.CyclopsSolarCharger");
         }
 
         private void InitializePrefabs()
@@ -57,12 +56,12 @@ namespace CyclopsSolarCharger
             ChargerPrefab.Register();
         }
 
-        [HarmonyPatch(typeof(SubRoot), nameof(SubRoot.UpdateThermalReactorCharge))]
+        [HarmonyPatch(typeof(SubRoot), "UpdateThermalReactorCharge")]
         private static class SubRoot_UpdateThermalReactorCharge_Patch
         {
-            public static void Postfix(SubRoot __instance)
+            public static void Postfix(SubRoot __instance, LiveMixin ___live, string[] ___slotNames)
             {
-                if(!modEnabled.Value || __instance.upgradeConsole == null || !__instance.live.IsAlive())
+                if(!modEnabled.Value || __instance.upgradeConsole == null || ___live.IsAlive())
                     return;
 
                 CyclopsSolarChargerComponent component = __instance.GetComponent<CyclopsSolarChargerComponent>();
@@ -74,7 +73,7 @@ namespace CyclopsSolarCharger
                 Equipment modules = __instance.upgradeConsole.modules;
                 for (int i = 0; i < 6; i++)
                 {
-                    string text = SubRoot.slotNames[i];
+                    string text = ___slotNames[i];
                     TechType techTypeInSlot = modules.GetTechTypeInSlot(text);
                     if (techTypeInSlot == ChargerPrefab.Info.TechType)
                     {

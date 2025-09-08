@@ -26,8 +26,8 @@ namespace BedTeleport
         private void OnEnable()
         {
             uGUI_LegendBar.ClearButtons();
-            uGUI_LegendBar.ChangeButton(0, uGUI.FormatButton(GameInput.Button.UICancel, false, " / ", true), Language.main.GetFormat("Back"));
-            uGUI_LegendBar.ChangeButton(1, uGUI.FormatButton(GameInput.Button.UISubmit, false, " / ", true), Language.main.GetFormat("ItemSelectorSelect"));
+            uGUI_LegendBar.ChangeButton(0, GameInput.FormatButton(GameInput.Button.UICancel, false), Language.main.GetFormat("Back"));
+            uGUI_LegendBar.ChangeButton(1, GameInput.FormatButton(GameInput.Button.UISubmit, false), Language.main.GetFormat("ItemSelectorSelect"));
         }
         protected override void OnDisable()
         {

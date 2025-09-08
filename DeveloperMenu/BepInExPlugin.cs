@@ -5,6 +5,7 @@ using HarmonyLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using TMPro;
@@ -13,18 +14,19 @@ using UnityEngine.UI;
 
 namespace DeveloperMenu
 {
-    [BepInPlugin("aedenthorn.DeveloperMenu", "DeveloperMenu", "0.5.0")]
+    [BepInPlugin("aedenthorn.DeveloperMenu", "DeveloperMenu", "0.6.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
-
         public static ConfigEntry<bool> developerModeEnabled;
+
         public static ConfigEntry<float> range;
         public static ConfigEntry<string> spawnTabLabel;
-        public static ConfigEntry<KeyCode> toggleKey;
+        public static ConfigEntry<GameInput.Button> toggleKey;
+        public static ConfigEntry<GameInput.Button> toggleModKey;
         public static ConfigEntry<KeyCode> ingredientsModKey;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
@@ -39,7 +41,8 @@ namespace DeveloperMenu
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
             developerModeEnabled = Config.Bind<bool>("Options", "DeveloperModeEnabled", false, "Whether developer mode is enabled");
-            toggleKey = Config.Bind<KeyCode>("Options", "ToggleKey", KeyCode.Backslash, "Key to press to toggle developer menu.");
+            toggleKey = Config.Bind<GameInput.Button>("Options", "ToggleKey", GameInput.Button.MoveDown, "Key to press to toggle dev menu.");
+            toggleModKey = Config.Bind<GameInput.Button>("Options", "ToggleModKey", GameInput.Button.MoveUp, "Key to hold while pressing the toggle key.");
             ingredientsModKey = Config.Bind<KeyCode>("Options", "IngredientsModKey", KeyCode.LeftShift, "Key to hold when pressing give button to give ingredients instead.");
             spawnTabLabel = Config.Bind<string>("Options", "SpawnTabLabel", "Spawn", "Spawn tab label.");
 
@@ -47,43 +50,47 @@ namespace DeveloperMenu
             Dbgl("Plugin awake");
 
         }
-        public void Update()
-        {
-            if (modEnabled.Value && Input.GetKeyDown(toggleKey.Value))
-            {
-                developerModeEnabled.Value = !developerModeEnabled.Value;
-                Dbgl($"Developer mode enabled: {developerModeEnabled.Value}");
-            }
-        }
-        [HarmonyPatch(typeof(GameInput), nameof(GameInput.GetEnableDeveloperMode))]
-        private static class GameInput_GetEnableDeveloperMode_Patch
-        {
-            static void Postfix(GameInput __instance, ref bool __result)
-            {
-                if (modEnabled.Value)
-                    __result = developerModeEnabled.Value;
-            }
-        }
-        [HarmonyPatch(typeof(IngameMenu), "Update")]
-        private static class IngameMenu_Update_Patch
-        {
-            static void Prefix(IngameMenu __instance, ref bool ___developerMode)
-            {
-                if (!modEnabled.Value)
-                    return;
-                ___developerMode = developerModeEnabled.Value;
-                __instance.developerButton.gameObject.SetActive(___developerMode);
-            }
-        }
         [HarmonyPatch(typeof(PlatformUtils), nameof(PlatformUtils.GetDevToolsEnabled))]
         private static class PlatformUtils_GetDevToolsEnabled_Patch
         {
             static bool Prefix(ref bool __result)
             {
+                if (modEnabled.Value)
+                {
+                    __result = true;
+                    return false;
+                }
+                return true;
+            }
+        }
+        [HarmonyPatch(typeof(IngameMenu), nameof(IngameMenu.ActivateDeveloperMode))]
+        private static class IngameMenu_ActivateDeveloperMode_Patch
+        {
+            static bool Prefix(IngameMenu __instance, ref bool ___developerMode)
+            {
                 if (!modEnabled.Value)
                     return true;
-                __result = true;
+                ___developerMode = developerModeEnabled.Value;
+                __instance.developerButton.gameObject.SetActive(___developerMode);
                 return false;
+            }
+        }
+        [HarmonyPatch(typeof(IngameMenu), "Update")]
+        private static class IngameMenu_Update_Patch
+        {
+            static void Postfix(IngameMenu __instance, ref bool ___developerMode)
+            {
+                if (!modEnabled.Value)
+                    return;
+                if (GameInput.GetButtonHeld(GameInput.Button.MoveUp) && GameInput.GetButtonDown(GameInput.Button.MoveDown))
+                {
+                    developerModeEnabled.Value = !developerModeEnabled.Value;
+                }
+                if (developerModeEnabled.Value != ___developerMode)
+                {
+                    Dbgl(developerModeEnabled.Value ? "Activating" : "Deactivating");
+                    __instance.ActivateDeveloperMode();
+                }
             }
         }
         [HarmonyPatch(typeof(InventoryConsoleCommands), "OnConsoleCommand_item")]
@@ -100,47 +107,18 @@ namespace DeveloperMenu
                     TechType techType;
                     if (!UWE.Utils.TryParseEnum<TechType>(text, out techType))
                         return true;
-                    ITechData techData = CraftData.Get(techType, true);
-                    if (techData == null)
-                        return true;
-                    Dbgl($"Spawning {techData.ingredientCount} ingredients for {techType}");
-
-                    for (int i = 0; i < techData.ingredientCount; i++)
+                    ReadOnlyCollection<Ingredient> ingredients = TechData.GetIngredients(techType);
+                    if (ingredients != null)
                     {
-                        var ing = techData.GetIngredient(i);
-                        if (CraftData.IsAllowed(ing.techType))
+                        for (int i = 0; i < ingredients.Count; i++)
                         {
-                            int number = ing.amount;
-                            Dbgl($"Spawning {ing.amount}x {ing.techType}");
-                            __instance.StartCoroutine(ItemCmdSpawnAsync(number, ing.techType));
+                            Ingredient ingredient = ingredients[i];
+                            CraftData.AddToInventory(ingredient.techType, ingredient.amount, false, false);
                         }
                     }
                 }
                 return false;
             }
-        }
-
-        private static IEnumerator ItemCmdSpawnAsync(int number, TechType techType)
-        {
-            TaskResult<GameObject> result = new TaskResult<GameObject>();
-            int num;
-            for (int i = 0; i < number; i = num + 1)
-            {
-                yield return CraftData.InstantiateFromPrefabAsync(techType, result, false);
-                GameObject gameObject = result.Get();
-                if (gameObject != null)
-                {
-                    gameObject.transform.position = MainCamera.camera.transform.position + MainCamera.camera.transform.forward * 3f;
-                    CrafterLogic.NotifyCraftEnd(gameObject, techType);
-                    Pickupable component = gameObject.GetComponent<Pickupable>();
-                    if (component != null && !Inventory.main.Pickup(component, false))
-                    {
-                        ErrorMessage.AddError(Language.main.Get("InventoryFull"));
-                    }
-                }
-                num = i;
-            }
-            yield break;
         }
 
 
