@@ -5,14 +5,19 @@ namespace CyclopsSolarCharger
     public class CyclopsSolarChargerComponent : MonoBehaviour
     {
         public int upgradeModules;
-        private void Start()
+        private void Awake()
         {
             InvokeRepeating("UpdateSolarRecharge", 1f, 1f);
         }
         private void UpdateSolarRecharge()
         {
-            if (!BepInExPlugin.modEnabled.Value || upgradeModules == 0)
+            if (!BepInExPlugin.modEnabled.Value)
                 return;
+            if(upgradeModules == 0)
+            {
+                return;
+            }
+            BepInExPlugin.Dbgl($"got {upgradeModules} modules");
 
             DayNightCycle main = DayNightCycle.main;
             if (main == null)
@@ -24,8 +29,8 @@ namespace CyclopsSolarCharger
             float amount = 1f * localLightScalar * num * (float)upgradeModules;
             if(amount > 0)
             {
-                float num3;
-                this.GetComponent<SubRoot>().powerRelay.AddEnergy(amount, out num3);
+                this.GetComponent<SubRoot>().powerRelay.AddEnergy(amount, out float stored);
+                BepInExPlugin.Dbgl($"Added energy: {stored}");
             }
         }
     }

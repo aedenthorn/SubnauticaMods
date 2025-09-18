@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace CyclopsSolarCharger
 {
-    [BepInPlugin("aedenthorn.CyclopsSolarCharger", "CyclopsSolarCharger", "0.2.0")]
+    [BepInPlugin("aedenthorn.CyclopsSolarCharger", "CyclopsSolarCharger", "0.3.0")]
     [BepInDependency("com.snmodding.nautilus")]
     public class BepInExPlugin : BaseUnityPlugin
     {
@@ -36,7 +36,7 @@ namespace CyclopsSolarCharger
         {
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
-            isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
+            isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
 
             ingredients = Config.Bind<string>("Options", "Ingredients", "AdvancedWiringKit:1,EnameledGlass:2", "Required ingredients, comma separated TechType:Amount pairs");
             fabricatorType = Config.Bind<CraftTree.Type>("Options", "FabricatorType", CraftTree.Type.CyclopsFabricator, "Fabricator to use to craft the chip.");
@@ -48,7 +48,7 @@ namespace CyclopsSolarCharger
             InitializePrefabs();
 
             // register harmony patches, if there are any
-            Harmony.CreateAndPatchAll(Assembly, "aedenthorn.CyclopsSolarCharger");
+            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), "aedenthorn.CyclopsSolarCharger");
         }
 
         private void InitializePrefabs()
@@ -56,12 +56,13 @@ namespace CyclopsSolarCharger
             ChargerPrefab.Register();
         }
 
-        [HarmonyPatch(typeof(SubRoot), "UpdateThermalReactorCharge")]
-        private static class SubRoot_UpdateThermalReactorCharge_Patch
+        [HarmonyPatch(typeof(SubRoot), "Update")]
+        private static class SubRoot_Update_Patch
         {
-            public static void Postfix(SubRoot __instance, LiveMixin ___live, string[] ___slotNames)
+            public static void Prefix(SubRoot __instance, LiveMixin ___live, string[] ___slotNames, bool ___subModulesDirty)
             {
-                if(!modEnabled.Value || __instance.upgradeConsole == null || ___live.IsAlive())
+
+                if (!modEnabled.Value || __instance.upgradeConsole == null || !___live.IsAlive())
                     return;
 
                 CyclopsSolarChargerComponent component = __instance.GetComponent<CyclopsSolarChargerComponent>();
@@ -69,16 +70,23 @@ namespace CyclopsSolarCharger
                 {
                     component = __instance.gameObject.AddComponent<CyclopsSolarChargerComponent>();
                 }
-                component.upgradeModules = 0;
-                Equipment modules = __instance.upgradeConsole.modules;
-                for (int i = 0; i < 6; i++)
+                if (___subModulesDirty)
                 {
-                    string text = ___slotNames[i];
-                    TechType techTypeInSlot = modules.GetTechTypeInSlot(text);
-                    if (techTypeInSlot == ChargerPrefab.Info.TechType)
+                    Dbgl("sub modules dirty");
+
+                    component.upgradeModules = 0;
+                    Equipment modules = __instance.upgradeConsole.modules;
+                    for (int i = 0; i < 6; i++)
                     {
-                        component.upgradeModules++;
+                        string text = ___slotNames[i];
+                        TechType techTypeInSlot = modules.GetTechTypeInSlot(text);
+                        Dbgl($"got {techTypeInSlot} module (looking for {ChargerPrefab.Info.TechType})");
+                        if (techTypeInSlot == ChargerPrefab.Info.TechType)
+                        {
+                            component.upgradeModules++;
+                        }
                     }
+                    Dbgl($"got {component.upgradeModules} modules");
                 }
             }
         }

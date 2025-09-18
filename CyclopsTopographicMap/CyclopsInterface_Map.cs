@@ -31,6 +31,7 @@ namespace CyclopsTopographicMap
             else if (GameInput.GetButtonDown(GameInput.Button.AltTool))
             {
                 miniWorld.active = !miniWorld.active;
+                BepInExPlugin.Dbgl($"Map active: {miniWorld.active}");
             }
             if (miniWorld.active)
             {

@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace CraftFromRawMaterials
 {
-    [BepInPlugin("aedenthorn.CraftFromRawMaterials", "Craft From Raw Materials", "0.3.0")]
+    [BepInPlugin("aedenthorn.CraftFromRawMaterials", "Craft From Raw Materials", "0.3.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

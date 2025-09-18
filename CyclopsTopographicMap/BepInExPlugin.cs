@@ -13,7 +13,7 @@ using static HandReticle;
 
 namespace CyclopsTopographicMap
 {
-    [BepInPlugin("aedenthorn.CyclopsTopographicMap", "Cyclops Topographic Map", "0.1.0")]
+    [BepInPlugin("aedenthorn.CyclopsTopographicMap", "Cyclops Topographic Map", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -41,7 +41,7 @@ namespace CyclopsTopographicMap
         }
 
 
-        [HarmonyPatch(typeof(SubRoot), nameof(SubRoot.Start))]
+        [HarmonyPatch(typeof(PilotingChair), nameof(PilotingChair.Start))]
         private static class PilotingChair_Start_Patch
         {
             static void Postfix(PilotingChair __instance)

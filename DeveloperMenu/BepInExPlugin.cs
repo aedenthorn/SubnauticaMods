@@ -82,7 +82,7 @@ namespace DeveloperMenu
             {
                 if (!modEnabled.Value)
                     return;
-                if (GameInput.GetButtonHeld(GameInput.Button.MoveUp) && GameInput.GetButtonDown(GameInput.Button.MoveDown))
+                if (GameInput.GetButtonHeld(toggleModKey.Value) && GameInput.GetButtonDown(toggleKey.Value))
                 {
                     developerModeEnabled.Value = !developerModeEnabled.Value;
                 }

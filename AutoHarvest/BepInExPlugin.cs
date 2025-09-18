@@ -116,7 +116,7 @@ namespace AutoHarvest
             Collider[] colliders = Physics.OverlapSphere(Player.main.transform.position, range.Value);
             if (!Player.main.HasInventoryRoom(1, 1))
                 return;
-            Dbgl("searching...");
+            //Dbgl("searching...");
             //Collider[] colliders = new Collider[maxHarvest.Value];
             //Physics.OverlapSphereNonAlloc(Player.main.transform.position, 100, colliders);
 

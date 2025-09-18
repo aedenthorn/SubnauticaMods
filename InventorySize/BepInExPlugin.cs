@@ -22,6 +22,7 @@ namespace InventorySize
         public static ConfigEntry<bool> addScrollview;
         public static ConfigEntry<int> inventoryWidth;
         public static ConfigEntry<int> inventoryHeight;
+        public static ConfigEntry<float> scrollSensitivity;
         public static ConfigEntry<float> overflowOffset;
 
         private static RectTransform rts;
@@ -42,6 +43,7 @@ namespace InventorySize
             addScrollview = Config.Bind<bool>("Options", "AddScrollview", true, "Enable adding Scroll View for large storage sizes");
             inventoryWidth = Config.Bind<int>("Options", "InventoryWidth", 6, "Inventory width");
             inventoryHeight = Config.Bind<int>("Options", "InventoryHeight", 8, "Inventory width");
+            scrollSensitivity = Config.Bind<float>("Options", "ScrollSensitivity", 50f, "Scroll sensitivity");
             overflowOffset = Config.Bind<float>("Options", "OverflowOffset", 20f, "Overflow offset to show part of the offscreen inventory grid in UI");
 
             inventoryWidth.SettingChanged += SettingChanged;
@@ -142,7 +144,7 @@ namespace InventorySize
                     sr.horizontal = true;
                     sr.viewport = mask.GetComponent<RectTransform>();
                     sr.content = rtg;
-                    sr.scrollSensitivity = 50;
+                    sr.scrollSensitivity = scrollSensitivity.Value;
 
                     Dbgl("Added scroll view");
                 }
