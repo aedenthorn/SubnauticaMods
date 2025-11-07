@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace CyclopsSolarCharger
 {
-    [BepInPlugin("aedenthorn.CyclopsSolarCharger", "CyclopsSolarCharger", "0.3.0")]
+    [BepInPlugin("aedenthorn.CyclopsSolarCharger", "CyclopsSolarCharger", "0.5.0")]
     [BepInDependency("com.snmodding.nautilus")]
     public class BepInExPlugin : BaseUnityPlugin
     {
@@ -19,6 +19,8 @@ namespace CyclopsSolarCharger
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
+
+        public static ConfigEntry<bool> requireSeamothCharger;
 
         public static ConfigEntry<string> nameString;
         public static ConfigEntry<string> descriptionString;
@@ -37,6 +39,8 @@ namespace CyclopsSolarCharger
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
+            
+            requireSeamothCharger = Config.Bind<bool>("Options", "RequireSeamothCharger", true, "Require knowing the Seamoth solar charger to fabricate.");
 
             ingredients = Config.Bind<string>("Options", "Ingredients", "AdvancedWiringKit:1,EnameledGlass:2", "Required ingredients, comma separated TechType:Amount pairs");
             fabricatorType = Config.Bind<CraftTree.Type>("Options", "FabricatorType", CraftTree.Type.CyclopsFabricator, "Fabricator to use to craft the chip.");
@@ -76,7 +80,7 @@ namespace CyclopsSolarCharger
 
                     component.upgradeModules = 0;
                     Equipment modules = __instance.upgradeConsole.modules;
-                    for (int i = 0; i < 6; i++)
+                    for (int i = 0; i < ___slotNames.Length; i++)
                     {
                         string text = ___slotNames[i];
                         TechType techTypeInSlot = modules.GetTechTypeInSlot(text);

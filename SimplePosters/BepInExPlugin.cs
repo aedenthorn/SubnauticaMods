@@ -21,7 +21,7 @@ using Nautilus.Assets.Gadgets;
 
 namespace SimplePosters
 {
-    [BepInPlugin("aedenthorn.SimplePosters", "Simple Posters", "1.1.0")]
+    [BepInPlugin("aedenthorn.SimplePosters", "Simple Posters", "1.1.1")]
     [BepInDependency("com.snmodding.nautilus")]
     public class BepInExPlugin : BaseUnityPlugin
     {

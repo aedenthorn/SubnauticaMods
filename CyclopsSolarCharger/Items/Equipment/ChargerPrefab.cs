@@ -42,7 +42,10 @@ namespace CyclopsSolarCharger.Items.Equipment
                 .WithFabricatorType(BepInExPlugin.fabricatorType.Value);
             customPrefab.SetEquipment(EquipmentType.CyclopsModule);
             customPrefab.Register();
-            KnownTechHandler.SetCompoundUnlock(customPrefab.Info.TechType, new List<TechType>() { TechType.SeamothSolarCharge });
+            if (BepInExPlugin.requireSeamothCharger.Value)
+            {
+                KnownTechHandler.SetCompoundUnlock(customPrefab.Info.TechType, new List<TechType>() { TechType.SeamothSolarCharge });
+            }
         }
     }
 
