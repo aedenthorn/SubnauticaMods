@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace InventorySize
 {
-    [BepInPlugin("aedenthorn.InventorySize", "Inventory Size", "0.2.1")]
+    [BepInPlugin("aedenthorn.InventorySize", "Inventory Size", "0.2.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -42,7 +42,7 @@ namespace InventorySize
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
             addScrollview = Config.Bind<bool>("Options", "AddScrollview", true, "Enable adding Scroll View for large storage sizes");
             inventoryWidth = Config.Bind<int>("Options", "InventoryWidth", 6, "Inventory width");
-            inventoryHeight = Config.Bind<int>("Options", "InventoryHeight", 8, "Inventory width");
+            inventoryHeight = Config.Bind<int>("Options", "InventoryHeight", 8, "Inventory height");
             scrollSensitivity = Config.Bind<float>("Options", "ScrollSensitivity", 50f, "Scroll sensitivity");
             overflowOffset = Config.Bind<float>("Options", "OverflowOffset", 20f, "Overflow offset to show part of the offscreen inventory grid in UI");
 

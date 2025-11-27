@@ -58,11 +58,13 @@ namespace ImageReplace
                 return;
             if (hotKey.Value.IsDown())
             {
+                Dbgl("Reloading images");
                 cachedTextures.Clear();
                 StartCoroutine(ReplaceImages());
             }
             else if (dumpHotKey.Value.IsDown())
             {
+                Dbgl("Dumping images");
                 StartCoroutine(DumpImages());
             }
 
