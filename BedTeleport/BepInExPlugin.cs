@@ -4,19 +4,22 @@ using BepInEx.Logging;
 using FMOD.Studio;
 using HarmonyLib;
 using Newtonsoft.Json;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.Utilities;
 using UnityEngine.UI;
 using UWE;
 using static HandReticle;
 
 namespace BedTeleport
 {
-    [BepInPlugin("aedenthorn.BedTeleport", "BedTeleport", "0.3.0")]
+    [BepInPlugin("aedenthorn.BedTeleport", "BedTeleport", "0.4.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -163,65 +166,119 @@ namespace BedTeleport
                 ErrorMessage.AddWarning("Menu template not found!");
                 return;
             }
-            menuGO = Instantiate(template.gameObject, uGUI.main.hud.transform);
-            menuGO.name = "TeleportMenu";
+            int width = 545;
+            int height = 800;
+
+            menuGO = new GameObject("TeleportMenu");
+            menuGO.transform.SetParent(uGUI.main.hud.transform);
+            var rtb = menuGO.AddComponent<RectTransform>();
+            rtb.sizeDelta = new Vector2(width, height);
+
+            var menuContent = Instantiate(template.GetComponentInChildren<VerticalLayoutGroup>().gameObject, menuGO.transform);
+            DestroyImmediate(menuContent.GetComponent<IngameMenuTopLevel>());
+            DestroyImmediate(menuContent.GetComponent<ContentSizeFitter>());
+            DestroyImmediate(menuContent.GetComponent<VerticalLayoutGroup>());
+            DestroyImmediate(menuContent.transform.Find("Header").gameObject);
+            menuContent.GetComponent<RectTransform>().sizeDelta = new Vector2(width, height);
+
+            Dbgl($"Adding scroll view");
+
+            GameObject scrollObject = new GameObject() { name = "ScrollView" };
+            scrollObject.transform.SetParent(menuContent.transform);
+            var rts = scrollObject.AddComponent<RectTransform>();
+            rts.sizeDelta = new Vector2(width, height - 200);
+
+            GameObject mask = new GameObject { name = "Mask" };
+            mask.transform.SetParent(scrollObject.transform);
+            var rtm = mask.AddComponent<RectTransform>();
+            rtm.sizeDelta = new Vector2(rts.sizeDelta.x - 140, rts.sizeDelta.y);
+
+            Texture2D tex = new Texture2D((int)Mathf.Ceil(rtm.rect.width), (int)Mathf.Ceil(rtm.rect.height));
+            Image image = mask.AddComponent<Image>();
+            image.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), Vector2.zero);
+            Mask m = mask.AddComponent<Mask>();
+            m.showMaskGraphic = false;
+
+            var gridContent = Instantiate(menuContent.transform.Find("ButtonLayout").gameObject, mask.transform);
+            DestroyImmediate(menuContent.transform.Find("ButtonLayout").gameObject);
+
+            var sr = scrollObject.AddComponent<ScrollRect>();
+
+            Dbgl("Added scroll view");
+
+            var header = Instantiate(template.transform.Find("Header").gameObject, menuContent.transform).transform;
+            var rth = header.GetComponent<RectTransform>();
+
+            var rtg = gridContent.GetComponent<RectTransform>();
+            DestroyImmediate(gridContent.GetComponent<ContentSizeFitter>());
+            sr.content = rtg;
+
             var menu = menuGO.AddComponent<TeleportMenu>();
             menu.Select();
-            
+
+            sr.movementType = ScrollRect.MovementType.Clamped;
+            sr.horizontal = false;
+            sr.viewport = mask.GetComponent<RectTransform>();
+            sr.scrollSensitivity = 50;
+
             Dbgl("Created menu");
 
-            var buttons = menuGO.GetComponentsInChildren<Button>(true);
+            var buttons = menuContent.GetComponentsInChildren<Button>(true);
             Button templateButton = null;
             bool first = true;
-            foreach(var button in buttons)
+            foreach (var button in buttons)
             {
                 if (first)
                 {
                     templateButton = button;
+                    Destroy(templateButton.gameObject.GetComponent<EventTrigger>());
                     first = false;
                 }
                 else Destroy(button.gameObject);
             }
             var beds = new List<Bed>();
-            foreach(var bed in FindObjectsOfType<Bed>())
+            foreach (var bed in FindObjectsOfType<Bed>())
             {
-                if(range.Value < 0 || Vector3.Distance(bed.transform.position, Player.main.transform.position) <= range.Value)
+                if (range.Value < 0 || Vector3.Distance(bed.transform.position, Player.main.transform.position) <= range.Value)
                     beds.Add(bed);
             }
 
-            Dbgl($"Found {beds.Count} beds");
-            if(beds.Count < 2)
+            if (beds.Count < 2)
             {
-
                 ErrorMessage.AddWarning("No beds found!");
                 return;
             }
-            var headerText = menuGO.transform.Find("Header").GetComponent<TextMeshProUGUI>();
-            headerText.text = menuHeader.Value;
+            else
+            {
+                Dbgl($"Found {beds.Count} beds");
+            }
+            rtg.sizeDelta = new Vector2(rtm.sizeDelta.x, (beds.Count + 1) * 80);
+            rtb.localScale = Vector3.one;
+            rtb.anchoredPosition3D = Vector3.zero;
 
-            first = true;
-            foreach(var bed in beds)
+            header.SetParent(menuContent.transform);
+            rth.localPosition = new Vector2(0, 362);
+            rth.sizeDelta = new Vector2(545f, 100);
+            var headerText = header.GetComponent<TextMeshProUGUI>();
+            headerText.text = menuHeader.Value;
+            Dbgl($"Header size: {rth.sizeDelta}");
+
+            foreach (var bed in beds)
             {
                 if (bed == source)
                     continue;
-                if (first)
-                {
-                    SetupButton(templateButton.gameObject, source, bed);
-                    first = false;
-                }
-                else
-                {
-                    GameObject b = Instantiate(templateButton.gameObject, templateButton.transform.parent);
-                    SetupButton(b, source, bed);
-                }
+                GameObject b = Instantiate(templateButton.gameObject, gridContent.transform);
+                SetupButton(b, source, bed);
             }
-            uGUI_INavigableIconGrid grid = menuGO.GetComponentInChildren<uGUI_INavigableIconGrid>();
-            if(grid is null)
-                grid = menuGO.GetComponent<uGUI_INavigableIconGrid>();
-            if(grid != null)
+            Destroy(templateButton.gameObject);
+
+            sr.verticalNormalizedPosition = 1;
+            sr.horizontalNormalizedPosition = 0;
+
+            uGUI_INavigableIconGrid grid = menuContent.GetComponentInChildren<uGUI_INavigableIconGrid>();
+            if (grid != null)
                 GamepadInputModule.current.SetCurrentGrid(grid);
         }
-
         private static void SetupButton(GameObject gameObject, Bed source, Bed dest)
         {
             gameObject.name = "Bed";

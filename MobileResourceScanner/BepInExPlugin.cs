@@ -17,7 +17,7 @@ using UnityEngine.UI;
 
 namespace MobileResourceScanner
 {
-    [BepInPlugin("aedenthorn.MobileResourceScanner", "MobileResourceScanner", "1.2.0")]
+    [BepInPlugin("aedenthorn.MobileResourceScanner", "MobileResourceScanner", "1.2.1")]
     [BepInDependency("com.snmodding.nautilus")]
     public class BepInExPlugin : BaseUnityPlugin
     {
@@ -197,15 +197,12 @@ namespace MobileResourceScanner
             }
             int width = 545;
             int height = 800;
-            var rtt = IngameMenu.main.GetComponent<RectTransform>();
+
             menuGO = new GameObject("ResourceMenu");
             menuGO.transform.SetParent(uGUI.main.hud.transform);
             var rtb = menuGO.AddComponent<RectTransform>();
             rtb.sizeDelta = new Vector2(width, height);
-            //rtb.localPosition = rtt.localPosition;
-            //rtb.pivot = rtt.pivot;
-            //rtb.anchorMax = rtt.anchorMax;
-            //rtb.anchorMin = rtt.anchorMin;
+
             var menuContent = Instantiate(template.GetComponentInChildren<VerticalLayoutGroup>().gameObject, menuGO.transform);
             DestroyImmediate(menuContent.GetComponent<IngameMenuTopLevel>());
             DestroyImmediate(menuContent.GetComponent<ContentSizeFitter>());
@@ -242,7 +239,6 @@ namespace MobileResourceScanner
             var rth = header.GetComponent<RectTransform>();
 
             var rtg = gridContent.GetComponent<RectTransform>();
-            DestroyImmediate(gridContent.GetComponent<ContentSizeFitter>());
             sr.content = rtg;
 
             var menu = menuGO.AddComponent<ResourceMenu>();
@@ -301,10 +297,9 @@ namespace MobileResourceScanner
             }
 
             techs.Insert(0, TechType.None);
-            rtg.sizeDelta = new Vector2(rtm.sizeDelta.x, techs.Count * 65);
+            rtg.sizeDelta = new Vector2(rtm.sizeDelta.x, techs.Count * 80);
             rtb.localScale = Vector3.one;
             rtb.anchoredPosition3D = Vector3.zero;
-
 
             header.SetParent(menuContent.transform);
             rth.localPosition = new Vector2(0, 362);
@@ -349,7 +344,7 @@ namespace MobileResourceScanner
                 if (active)
                     count++;
             }
-            gridGO.GetComponent<RectTransform>().sizeDelta = new Vector2(gridGO.GetComponent<RectTransform>().sizeDelta.x, 65 * count);
+            gridGO.GetComponent<RectTransform>().sizeDelta = new Vector2(gridGO.GetComponent<RectTransform>().sizeDelta.x, 80 * count);
         }
         private static void SetupButton(GameObject gameObject, TechType t)
         {

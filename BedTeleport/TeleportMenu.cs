@@ -19,7 +19,7 @@ namespace BedTeleport
         }
         public void Close()
         {
-            BepInExPlugin.Dbgl("Closing menu");
+            //BepInExPlugin.Dbgl("Closing menu");
             Deselect();
             Destroy(gameObject);
         }
@@ -31,7 +31,7 @@ namespace BedTeleport
         }
         protected override void OnDisable()
         {
-            BepInExPlugin.Dbgl("Disabling menu");
+            //BepInExPlugin.Dbgl("Disabling menu");
             base.OnDisable();
             uGUI_LegendBar.ClearButtons();
             Destroy(gameObject);
@@ -45,7 +45,7 @@ namespace BedTeleport
         }
         public override void OnDeselect()
         {
-            BepInExPlugin.Dbgl("Deselecting menu");
+            //BepInExPlugin.Dbgl("Deselecting menu");
             base.OnDeselect();
             FreezeTime.End(FreezeTime.Id.IngameMenu);
             Destroy(gameObject);
